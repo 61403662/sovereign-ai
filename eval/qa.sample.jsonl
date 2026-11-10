@@ -1,0 +1,7 @@
+{"question": "外观检查里扇叶有什么要求？", "expected_contains": ["裂纹", "变形"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "每批尺寸抽检至少几件？", "expected_contains": ["5"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "轴孔直径公差范围是多少？", "expected_contains": ["0.05"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "耐压测试条件是什么？", "expected_contains": ["500 V", "1 min"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "绝缘电阻低于多少不合格？", "expected_contains": ["10 MΩ"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "铭牌型号与采购单不一致怎么处理？", "expected_contains": ["隔离"], "expected_source": "data/samples/incoming-inspection-sample.md"}
+{"question": "火星上风机检验标准是什么？", "expected_contains": ["未包含", "无法", "没有"], "expected_source": null}

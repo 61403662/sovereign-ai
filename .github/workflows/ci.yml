@@ -12,3 +12,10 @@ jobs:
           test -f README.md
           test -f config/models.example.yaml
           test -f docs/runbook.md
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Unit tests (no Ollama)
+        run: |
+          pip install -e ".[dev]"
+          pytest tests/test_chunking.py -q

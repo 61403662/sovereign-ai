@@ -33,13 +33,22 @@ Private files stay on Deploy under `data/` and `storage/` (gitignored).
 ## Quick start (dev)
 
 ```bash
-git clone https://github.com/<you>/sovereign-ai.git
+git clone https://github.com/61403662/sovereign-ai.git
 cd sovereign-ai
 python3 -m venv .venv && source .venv/bin/activate
-# Phase 1+ will add pip install -e .
+pip install -r requirements.txt && pip install -e ".[dev]"
+pytest tests/test_chunking.py -q
 ```
 
-You can develop without a local Ollama (mocks in tests).
+Production **ingest/ask** runs on **Deploy** with local Ollama; see [`docs/runbook.md`](docs/runbook.md).
+
+## Quick start (Phase 1 RAG on Deploy)
+
+```powershell
+copy data\samples\incoming-inspection-sample.md data\raw\
+.\scripts\ingest.ps1 --reset
+.\scripts\ask.ps1 "每批尺寸抽检至少几件？"
+```
 
 ## Config
 
