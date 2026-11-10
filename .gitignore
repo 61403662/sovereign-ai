@@ -1,0 +1,35 @@
+# Private data and local indexes
+data/raw/
+data/processed/
+storage/
+chroma/
+*.db
+*.sqlite
+*.sqlite3
+
+# Local deploy config (may contain LAN URLs)
+config/models.yaml
+.env
+.env.*
+
+# Training artifacts
+train/datasets/private/
+train/outputs/
+*.safetensors
+*.gguf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

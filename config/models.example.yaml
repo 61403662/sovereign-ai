@@ -1,0 +1,13 @@
+# Copy to config/models.yaml on the deploy machine (gitignored).
+
+tier: B
+description: "8GB VRAM — RTX 2060 Super class; chat 7B Q4, no default 14B"
+
+ollama_base_url: "http://127.0.0.1:11434"
+
+chat_model: "qwen2.5:7b-instruct-q4_K_M"
+
+embed_model: "nomic-embed-text"
+
+gpu: true
+num_ctx: 8192
