@@ -1,10 +1,12 @@
 from sovereign_ai.ask.rerank import (
     effective_top_k,
+    ensure_coop_coverage,
     merge_hits,
     missing_coop_ids,
     per_coop_fallback_queries,
     rerank_hits,
     supplemental_embed_queries,
+    _question_intent,
 )
 
 
@@ -88,11 +90,50 @@ def test_explicit_section_boost_promotes_objectives():
     assert out[0]["heading"] == "目标与原则"
 
 
-def test_supplemental_queries_for_goals_and_multi_coop():
+def test_supplemental_queries_for_scope_compare_multi_coop():
     qs = supplemental_embed_queries("COOP-22162 和 COOP-22163 分别管什么？")
-    assert any("目标与原则" in q for q in qs)
-    assert any("22162" in q for q in qs)
+    assert "goals" not in _question_intent("COOP-22162 和 COOP-22163 分别管什么？")
+    assert "scope_compare" in _question_intent("COOP-22162 和 COOP-22163 分别管什么？")
+    assert any("SKUNK" in q and "22162" in q for q in qs)
     assert any("22163" in q for q in qs)
+
+
+def test_rerank_scope_compare_promotes_scope_and_objectives():
+    hits = [
+        {
+            "heading": "子计划导航",
+            "text": "nav",
+            "source": "data/raw/coop-22163.plan.md",
+            "distance": 0.1,
+        },
+        {
+            "heading": "Scope",
+            "text": "COOP-22162 > Scope\n\nSKUNK 展开",
+            "source": "data/raw/coop-22162.plan.md",
+            "distance": 0.22,
+        },
+        {
+            "heading": "目标与原则",
+            "text": "COOP-22163 > 目标与原则\n\nPOD PSI",
+            "source": "data/raw/coop-22163.plan.md",
+            "distance": 0.24,
+        },
+    ]
+    out = rerank_hits("COOP-22162 和 COOP-22163 分别管什么？", hits)
+    assert out[0]["heading"] in ("Scope", "目标与原则")
+    assert out[1]["heading"] in ("Scope", "目标与原则")
+
+
+def test_ensure_coop_coverage_puts_each_coop_first():
+    hits = [
+        {"source": "data/raw/coop-22163.plan.md", "heading": "目标与原则", "text": "a"},
+        {"source": "data/raw/coop-22163.plan.md", "heading": "子计划导航", "text": "b"},
+        {"source": "data/raw/coop-22162.plan.md", "heading": "Scope", "text": "c"},
+        {"source": "data/raw/coop-22162.plan.md", "heading": "Backend Plan", "text": "d"},
+    ]
+    out = ensure_coop_coverage(hits, ["COOP-22162", "COOP-22163"], max_context=8, min_per_coop=1)
+    assert "22162" in out[0]["source"]
+    assert "22163" in out[1]["source"]
 
 
 def test_missing_coop_ids_detects_absent_file():

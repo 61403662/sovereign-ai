@@ -3,13 +3,14 @@ import sys
 
 from sovereign_ai.ask.citations import format_citations, select_citation_hits
 from sovereign_ai.ask.rerank import (
+    coop_ids_from_question,
     effective_top_k,
+    ensure_coop_coverage,
     merge_hits,
     missing_coop_ids,
     per_coop_fallback_queries,
     rerank_hits,
     supplemental_embed_queries,
-    coop_ids_from_question,
 )
 from sovereign_ai.chroma_store import ChromaStore
 from sovereign_ai.config_loaders import load_models_config, load_rag_config
@@ -23,6 +24,7 @@ SYSTEM_PROMPT = (
     "问开发、后端、接口、实现或计划时，优先采用技术实现相关段落（如 Backend Plan、API、routes），"
     "不要把范围/不做什么（Scope）或子计划导航索引当成完整计划。"
     "问 COOP 总体目标或「目标与原则」小节时，以该节正文为准逐条概括；上下文中出现「目标与原则」段落时禁止回答「未直接提及」。"
+    "若问题同时提到多个 COOP 工单，须分别根据其各自 plan 的范围/目标段落概括，不得把其一当成另一的子计划或猜测。"
     "上下文若含 Backend Plan / Frontend Plan 等技术小节，以其为准作答；能列条就列条，保留 API 路径与字段名等原文标识。"
     "回答使用简体中文，条理清晰。"
 )
@@ -66,6 +68,8 @@ def run_ask(question: str) -> int:
         for fq in per_coop_fallback_queries(cid):
             merged = merge_hits(merged, store.query(client.embed(fq), 4))
     hits = rerank_hits(question, merged)
+    if len(coop_ids) >= 2:
+        hits = ensure_coop_coverage(hits, coop_ids)
     if not hits:
         print("向量库为空或无可命中段落，请先运行: python -m sovereign_ai.ingest", file=sys.stderr)
         return 1

@@ -10,10 +10,15 @@ def _question_intent(question: str) -> set[str]:
         intents.add("frontend")
     if any(t in q for t in ("测试", "test", "验收", "回归")):
         intents.add("tests")
-    if any(t in q for t in ("总体目标", "项目目标", "目标是什么", "管什么", "分别管")):
+    if any(t in q for t in ("总体目标", "项目目标", "目标是什么")):
         intents.add("goals")
     if "目标与原则" in question or ("目标" in question and "原则" in question):
         intents.add("goals")
+    if any(
+        t in q
+        for t in ("管什么", "分别管", "各自管", "负责什么", "什么范围", "区别", "对比")
+    ):
+        intents.add("scope_compare")
     return intents
 
 
@@ -73,6 +78,27 @@ def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
             )
         ):
             boost -= 0.45
+    if "scope_compare" in intents:
+        if h == "scope" or "scope" in prefix:
+            boost += 0.55
+        elif h in ("目标与原则", "plan 管理约束"):
+            boost += 0.4
+        elif h == "execution model":
+            boost += 0.35
+        if h == "子计划导航":
+            boost -= 0.45
+        elif any(
+            token in heading
+            for token in (
+                "缺口",
+                "单据跟踪",
+                "预期拆单",
+                "et/st",
+                "backend plan",
+                "frontend plan",
+            )
+        ):
+            boost -= 0.35
     return boost
 
 
@@ -136,7 +162,15 @@ def supplemental_embed_queries(question: str) -> list[str]:
     if "goals" in intents or "目标与原则" in question:
         lead = coop_ids[0] if coop_ids else "COOP"
         queries.append(f"{lead} 目标与原则 FAN POD PSI assignee ORG JIRADC_FEATURE_LIST")
-    if len(coop_ids) >= 2:
+    if "scope_compare" in intents and coop_ids:
+        for cid in coop_ids:
+            if cid.endswith("22162") or "22162" in cid:
+                queries.append(f"{cid} SKUNK Pipeline Expand Scope DoD 展开 FI FFB")
+            elif cid.endswith("22163") or "22163" in cid:
+                queries.append(f"{cid} AI-POD DoD Deployment 目标与原则 Plan 管理约束 范围")
+            else:
+                queries.append(f"{cid} plan scope 管什么")
+    elif len(coop_ids) >= 2:
         for cid in coop_ids:
             queries.append(f"{cid} scope SKUNK pipeline expand AI-POD DoD deployment")
     return queries
@@ -160,13 +194,66 @@ def missing_coop_ids(hits: list[dict], coop_ids: list[str]) -> list[str]:
 def per_coop_fallback_queries(coop_id: str) -> list[str]:
     if coop_id.endswith("22162") or "22162" in coop_id:
         return [
-            f"{coop_id} SKUNK Pipeline Expand FI FFB DoD getBrotherFeature",
+            f"{coop_id} SKUNK Pipeline Expand Scope DoD Pipeline 展开行为",
+            f"{coop_id} SKUNK getBrotherFeature FI FFB SI",
         ]
     if coop_id.endswith("22163") or "22163" in coop_id:
         return [
             f"{coop_id} AI-POD DoD Deployment 目标与原则 FAN POD PSI",
         ]
     return [f"{coop_id} plan scope goals"]
+
+
+def ensure_coop_coverage(
+    hits: list[dict],
+    coop_ids: list[str],
+    *,
+    max_context: int = 14,
+    min_per_coop: int = 2,
+) -> list[dict]:
+    """Put at least min_per_coop chunks from each named COOP near the front of context."""
+    if len(coop_ids) < 2 or not hits:
+        return hits[:max_context] if max_context > 0 else hits
+
+    buckets: dict[str, list[dict]] = {cid: [] for cid in coop_ids}
+    neutral: list[dict] = []
+    for h in hits:
+        src = str(h.get("source") or "")
+        placed = False
+        for cid in coop_ids:
+            if _coop_num(cid) in src:
+                buckets[cid].append(h)
+                placed = True
+                break
+        if not placed:
+            neutral.append(h)
+
+    seen: set[tuple[str, str, str]] = set()
+    ordered: list[dict] = []
+
+    def append(h: dict) -> None:
+        key = (
+            str(h.get("source") or ""),
+            str(h.get("heading") or ""),
+            str(h.get("text", ""))[:96],
+        )
+        if key in seen:
+            return
+        seen.add(key)
+        ordered.append(h)
+
+    for cid in coop_ids:
+        for h in buckets[cid][:min_per_coop]:
+            append(h)
+    for h in hits:
+        if len(ordered) >= max_context:
+            break
+        append(h)
+    for h in neutral:
+        if len(ordered) >= max_context:
+            break
+        append(h)
+    return ordered if ordered else hits[:max_context]
 
 
 def effective_top_k(question: str, base_top_k: int, *, multi_coop_multiplier: int = 2, cap: int = 16) -> int:
