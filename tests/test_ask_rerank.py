@@ -63,6 +63,31 @@ def test_rerank_coop_id_boosts_matching_file():
     assert "22162" in out[0]["source"]
 
 
+def test_goals_intent_from_section_phrase():
+    from sovereign_ai.ask.rerank import _question_intent
+
+    assert "goals" in _question_intent("COOP-22163 目标与原则一节说了什么？")
+
+
+def test_explicit_section_boost_promotes_objectives():
+    hits = [
+        {
+            "heading": "子计划导航",
+            "text": "nav",
+            "source": "x.md",
+            "distance": 0.1,
+        },
+        {
+            "heading": "目标与原则",
+            "text": "COOP > 目标与原则\n\nFAN",
+            "source": "y.md",
+            "distance": 0.25,
+        },
+    ]
+    out = rerank_hits("COOP-22163 目标与原则一节说了什么？", hits)
+    assert out[0]["heading"] == "目标与原则"
+
+
 def test_supplemental_queries_for_goals_and_multi_coop():
     qs = supplemental_embed_queries("COOP-22162 和 COOP-22163 分别管什么？")
     assert any("目标与原则" in q for q in qs)

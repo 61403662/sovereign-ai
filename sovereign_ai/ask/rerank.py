@@ -12,6 +12,8 @@ def _question_intent(question: str) -> set[str]:
         intents.add("tests")
     if any(t in q for t in ("总体目标", "项目目标", "目标是什么", "管什么", "分别管")):
         intents.add("goals")
+    if "目标与原则" in question or ("目标" in question and "原则" in question):
+        intents.add("goals")
     return intents
 
 
@@ -74,6 +76,17 @@ def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
     return boost
 
 
+def _explicit_section_boost(question: str, heading: str, text: str) -> float:
+    """When the user names a section (e.g. 目标与原则), strongly prefer that heading."""
+    boost = 0.0
+    if "目标与原则" in question:
+        if heading == "目标与原则" or "目标与原则" in (text[:100] if text else ""):
+            boost += 0.7
+        elif heading == "子计划导航":
+            boost -= 0.5
+    return boost
+
+
 def rerank_hits(question: str, hits: list[dict]) -> list[dict]:
     if not hits:
         return hits
@@ -90,6 +103,9 @@ def rerank_hits(question: str, hits: list[dict]) -> list[dict]:
             intents,
         )
         boost += _coop_boost(source, text, coop_ids)
+        boost += _explicit_section_boost(
+            question, str(h.get("heading") or ""), text
+        )
         return dist - boost
 
     return sorted(hits, key=sort_key)
@@ -117,9 +133,9 @@ def supplemental_embed_queries(question: str) -> list[str]:
     coop_ids = _coop_ids(question)
     intents = _question_intent(question)
     queries: list[str] = []
-    if "goals" in intents:
+    if "goals" in intents or "目标与原则" in question:
         lead = coop_ids[0] if coop_ids else "COOP"
-        queries.append(f"{lead} 目标与原则 FAN POD PSI assignee ORG")
+        queries.append(f"{lead} 目标与原则 FAN POD PSI assignee ORG JIRADC_FEATURE_LIST")
     if len(coop_ids) >= 2:
         for cid in coop_ids:
             queries.append(f"{cid} scope SKUNK pipeline expand AI-POD DoD deployment")
