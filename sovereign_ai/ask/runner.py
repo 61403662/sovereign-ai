@@ -61,7 +61,8 @@ def run_ask(question: str) -> int:
         store.query(client.embed(sq), 4) for sq in supplemental_embed_queries(question)
     ]
     merged = merge_hits(primary, *extra_groups)
-    for cid in missing_coop_ids(merged, _coop_ids(question)):
+    coop_ids = coop_ids_from_question(question)
+    for cid in missing_coop_ids(merged, coop_ids):
         for fq in per_coop_fallback_queries(cid):
             merged = merge_hits(merged, store.query(client.embed(fq), 4))
     hits = rerank_hits(question, merged)
