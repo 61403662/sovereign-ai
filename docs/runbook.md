@@ -62,7 +62,7 @@ Ingest (build vectors; use `--reset` to rebuild collection):
 .\scripts\ingest.ps1 --reset
 ```
 
-Ask (must show **引用来源** at end; default `cite_k: 1` in `config/rag.yaml` — only top hit, same file as rank-1):
+Ask lightly re-ranks hits when the question mentions 后端/前端/测试 (maps to `Backend Plan`, etc.). Must show **引用来源** at end; default `cite_k: 1` — only top hit after re-rank, same file as rank-1:
 
 
 ```powershell
