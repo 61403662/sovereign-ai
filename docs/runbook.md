@@ -23,7 +23,8 @@ git pull
 
 ## Phase 1 — Python venv (one-time)
 
-1. Install [Python 3.10+](https://www.python.org/downloads/windows/) (check **Add python.exe to PATH**).
+1. Install [Python **3.12** (64-bit)](https://www.python.org/downloads/windows/) (check **Add python.exe to PATH**).  
+   **Avoid 3.13+ on Deploy** for now: `chromadb` / `numpy` may try to compile from source without Visual Studio.
 2. From repo root:
 
 ```powershell
@@ -33,6 +34,14 @@ python -m venv .venv
 python -m pip install -U pip
 pip install -r requirements.txt
 pip install -e .
+```
+
+If `pip install -r requirements.txt` fails on **numpy** / **Meson** / **VS compiler**, your Python is too new (e.g. 3.15) or pip is building from source. Either install **Python 3.12** and recreate `.venv`, or (3.12 venv only) preinstall wheels:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install --only-binary :all: numpy httpx PyYAML
+.\.venv\Scripts\python.exe -m pip install --only-binary :all: "chromadb>=0.5.23,<0.6"
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
 3. Verify: `python -m sovereign_ai.ingest --help`
@@ -51,7 +60,8 @@ Ingest (build vectors; use `--reset` to rebuild collection):
 .\scripts\ingest.ps1 --reset
 ```
 
-Ask (must show **引用来源** at end):
+Ask (must show **引用来源** at end; default `cite_k: 1` in `config/rag.yaml` — only top hit, same file as rank-1):
+
 
 ```powershell
 .\scripts\ask.ps1 "每批尺寸抽检至少几件？"

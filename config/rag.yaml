@@ -1,4 +1,7 @@
 chunk_size: 512
 chunk_overlap: 64
 top_k: 5
+cite_k: 1
+# 引用来源仅来自与排名第 1 的 chunk 同一文件的检索结果
+cite_same_source_as_top: true
 collection: "default"

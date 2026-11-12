@@ -1,3 +1,5 @@
-httpx>=0.27.0
+# Deploy: use Python 3.10–3.12 (3.13+ often lacks prebuilt wheels; no MSVC needed).
+httpx>=0.27.0,<0.29
 PyYAML>=6.0.1
-chromadb>=0.5.0
+numpy>=2.0.0,<3
+chromadb>=0.5.23,<0.6.0

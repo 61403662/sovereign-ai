@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+from sovereign_ai.ask.citations import format_citations, select_citation_hits
 from sovereign_ai.chroma_store import ChromaStore
 from sovereign_ai.config_loaders import load_models_config, load_rag_config
 from sovereign_ai.ollama_client import OllamaClient
@@ -23,25 +24,13 @@ def format_context(hits: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
-def format_citations(hits: list[dict]) -> str:
-    lines = ["", "---", "引用来源:"]
-    seen: set[tuple[str, str]] = set()
-    for h in hits:
-        src = str(h.get("source") or "")
-        heading = str(h.get("heading") or "")
-        key = (src, heading)
-        if key in seen:
-            continue
-        seen.add(key)
-        lines.append(f"- [来源: {src}#{heading}]")
-    return "\n".join(lines)
-
-
 def run_ask(question: str) -> int:
     root = repo_root()
     rag = load_rag_config(root)
     models = load_models_config(root)
     top_k = int(rag.get("top_k", 5))
+    cite_k = int(rag.get("cite_k", 1))
+    cite_same_source = bool(rag.get("cite_same_source_as_top", True))
     collection = str(rag.get("collection", "default"))
 
     store = ChromaStore(root / "storage" / "chroma", collection)
@@ -67,7 +56,10 @@ def run_ask(question: str) -> int:
         ]
     )
     print(answer)
-    print(format_citations(hits))
+    cite_hits = select_citation_hits(
+        hits, cite_k=cite_k, same_source_as_top=cite_same_source
+    )
+    print(format_citations(cite_hits))
     return 0
 
 
