@@ -18,10 +18,16 @@ PowerShell:
 
 ```powershell
 cd E:\sovereign-ai-repo
-.\scripts\deploy-pull.ps1
+.\scripts\deploy-pull.cmd
 ```
 
 Or `git pull` if scripts are not updated yet.
+
+If `.ps1` is blocked (**禁止运行脚本** / ExecutionPolicy), use the `.cmd` wrappers above (they call PowerShell with `-ExecutionPolicy Bypass` for that process only). Alternatively:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-git-doctor.ps1
+```
 
 ## Git pull fails (Deploy · Windows)
 
@@ -32,8 +38,8 @@ TCP is fine; **Git’s HTTPS (libcurl)** is failing—often proxy leftovers, HTT
 
 ```powershell
 cd E:\sovereign-ai-repo
-.\scripts\deploy-git-doctor.ps1          # read-only checks
-.\scripts\deploy-git-doctor.ps1 -ApplyFixes   # unset proxy, HTTP/1.1, schannel, then pull
+.\scripts\deploy-git-doctor.cmd          # read-only checks
+.\scripts\deploy-git-doctor.cmd -ApplyFixes   # unset proxy, HTTP/1.1, schannel, then pull
 ```
 
 Manual equivalent:
