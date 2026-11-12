@@ -18,7 +18,87 @@ PowerShell:
 
 ```powershell
 cd E:\sovereign-ai-repo
+.\scripts\deploy-pull.ps1
+```
+
+Or `git pull` if scripts are not updated yet.
+
+## Git pull fails (Deploy · Windows)
+
+**Symptom:** `Test-NetConnection github.com -Port 443` → `TcpTestSucceeded : True`, but `git pull` → `Failed to connect to github.com port 443 after 21000ms`.  
+TCP is fine; **Git’s HTTPS (libcurl)** is failing—often proxy leftovers, HTTP/2, or SSL stack—not “GitHub down”.
+
+### Step A — Doctor + safe HTTPS fixes
+
+```powershell
+cd E:\sovereign-ai-repo
+.\scripts\deploy-git-doctor.ps1          # read-only checks
+.\scripts\deploy-git-doctor.ps1 -ApplyFixes   # unset proxy, HTTP/1.1, schannel, then pull
+```
+
+Manual equivalent:
+
+```powershell
+git config --global --unset http.proxy
+git config --global --unset https.proxy
+git config --local --unset http.proxy
+git config --local --unset https.proxy
+Remove-Item Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:ALL_PROXY -ErrorAction SilentlyContinue
+git config --global http.version HTTP/1.1
+git config --global http.sslBackend schannel
 git pull
+```
+
+Inspect **system** proxy (Admin PowerShell if needed):
+
+```powershell
+git config --list --show-origin | findstr /i proxy
+git config --system --unset http.proxy
+git config --system --unset https.proxy
+```
+
+If **Clash/V2Ray is running** and browser needs proxy, set Git to the **current** local port instead of unset:
+
+```powershell
+git config --global https.proxy http://127.0.0.1:7890
+git config --global http.proxy http://127.0.0.1:7890
+```
+
+### Step B — Use SSH (often most stable on Deploy)
+
+One-time on Deploy:
+
+```powershell
+ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519_github -N '""'
+Get-Content $env:USERPROFILE\.ssh\id_ed25519_github.pub
+```
+
+Add the public key in GitHub → **Settings → SSH and GPG keys → New SSH key**.
+
+```powershell
+ssh -T git@github.com
+cd E:\sovereign-ai-repo
+git remote set-url origin git@github.com:61403662/sovereign-ai.git
+git pull
+```
+
+### Step C — Emergency sync without Git on Deploy
+
+When HTTPS/SSH both blocked temporarily, pull on **WSL Dev** and copy into the Deploy tree (`data\raw` and `storage\` are untouched):
+
+```bash
+cd ~/sovereign-ai && git pull
+rsync -a --exclude data/raw --exclude storage/chroma \
+  ~/sovereign-ai/ /mnt/e/sovereign-ai-repo/
+```
+
+Or copy only what changed, e.g. `sovereign_ai/ask/runner.py`.
+
+### Step D — More detail for support
+
+```powershell
+$env:GIT_CURL_VERBOSE=1
+git pull 2>&1 | Select-Object -Last 25
 ```
 
 ## Phase 1 — Python venv (one-time)
