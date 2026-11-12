@@ -85,7 +85,10 @@ def run_ask(question: str) -> int:
     )
     print(answer)
     cite_hits = select_citation_hits(
-        hits, cite_k=cite_k, same_source_as_top=cite_same_source
+        hits,
+        cite_k=cite_k,
+        same_source_as_top=cite_same_source,
+        coop_ids=coop_ids if len(coop_ids) >= 2 else None,
     )
     print(format_citations(cite_hits))
     return 0
