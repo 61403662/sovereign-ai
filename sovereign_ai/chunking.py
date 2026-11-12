@@ -3,6 +3,14 @@ from pathlib import Path
 import hashlib
 import re
 
+# Leading YAML block used by Cursor/.plan.md etc.; not a Markdown heading.
+_YAML_FRONTMATTER_RE = re.compile(r"\A---\r?\n.*?\r?\n---\r?\n", re.DOTALL)
+
+
+def strip_yaml_frontmatter(text: str) -> str:
+    """Remove a leading --- ... --- block so todos/metadata are not indexed."""
+    return _YAML_FRONTMATTER_RE.sub("", text, count=1)
+
 
 @dataclass(frozen=True)
 class TextChunk:
@@ -54,7 +62,7 @@ def chunk_markdown_file(
     chunk_size: int,
     chunk_overlap: int,
 ) -> list[TextChunk]:
-    text = path.read_text(encoding="utf-8")
+    text = strip_yaml_frontmatter(path.read_text(encoding="utf-8"))
     rel = path.relative_to(root).as_posix()
     out: list[TextChunk] = []
     for heading, body in split_markdown_sections(text):
