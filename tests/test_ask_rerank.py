@@ -1,4 +1,9 @@
-from sovereign_ai.ask.rerank import effective_top_k, rerank_hits
+from sovereign_ai.ask.rerank import (
+    effective_top_k,
+    merge_hits,
+    rerank_hits,
+    supplemental_embed_queries,
+)
 
 
 def test_rerank_backend_question_promotes_backend_plan():
@@ -54,6 +59,20 @@ def test_rerank_coop_id_boosts_matching_file():
     ]
     out = rerank_hits("COOP-22162 管什么", hits)
     assert "22162" in out[0]["source"]
+
+
+def test_supplemental_queries_for_goals_and_multi_coop():
+    qs = supplemental_embed_queries("COOP-22162 和 COOP-22163 分别管什么？")
+    assert any("目标与原则" in q for q in qs)
+    assert any("22162" in q for q in qs)
+    assert any("22163" in q for q in qs)
+
+
+def test_merge_hits_dedupes():
+    a = [{"source": "a.md", "heading": "H", "text": "x", "distance": 0.1}]
+    b = [{"source": "a.md", "heading": "H", "text": "x", "distance": 0.2}]
+    merged = merge_hits(a, b)
+    assert len(merged) == 1
 
 
 def test_effective_top_k_doubles_for_multi_coop():

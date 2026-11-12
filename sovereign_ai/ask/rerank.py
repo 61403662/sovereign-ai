@@ -50,9 +50,14 @@ def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
             boost += 0.35
     if "goals" in intents:
         if h == "目标与原则" or "目标与原则" in prefix:
-            boost += 0.45
+            boost += 0.55
         elif h in ("子计划导航", "plan 管理约束"):
-            boost -= 0.3
+            boost -= 0.35
+        elif any(
+            token in heading
+            for token in ("缺口", "单据跟踪", "真实但已有", "条件成立", "已排除")
+        ):
+            boost -= 0.45
     return boost
 
 
@@ -75,6 +80,37 @@ def rerank_hits(question: str, hits: list[dict]) -> list[dict]:
         return dist - boost
 
     return sorted(hits, key=sort_key)
+
+
+def merge_hits(primary: list[dict], *others: list[dict]) -> list[dict]:
+    seen: set[tuple[str, str, str]] = set()
+    merged: list[dict] = []
+    for group in (primary, *others):
+        for h in group:
+            key = (
+                str(h.get("source") or ""),
+                str(h.get("heading") or ""),
+                str(h.get("text", ""))[:96],
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(h)
+    return merged
+
+
+def supplemental_embed_queries(question: str) -> list[str]:
+    """Short extra queries so goal/compare questions pull the right sections."""
+    coop_ids = _coop_ids(question)
+    intents = _question_intent(question)
+    queries: list[str] = []
+    if "goals" in intents:
+        lead = coop_ids[0] if coop_ids else "COOP"
+        queries.append(f"{lead} 目标与原则 FAN POD PSI assignee ORG")
+    if len(coop_ids) >= 2:
+        for cid in coop_ids:
+            queries.append(f"{cid} scope SKUNK pipeline expand AI-POD DoD deployment")
+    return queries
 
 
 def effective_top_k(question: str, base_top_k: int, *, multi_coop_multiplier: int = 2, cap: int = 16) -> int:

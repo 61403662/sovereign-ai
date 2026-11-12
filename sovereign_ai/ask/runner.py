@@ -2,7 +2,12 @@ import argparse
 import sys
 
 from sovereign_ai.ask.citations import format_citations, select_citation_hits
-from sovereign_ai.ask.rerank import effective_top_k, rerank_hits
+from sovereign_ai.ask.rerank import (
+    effective_top_k,
+    merge_hits,
+    rerank_hits,
+    supplemental_embed_queries,
+)
 from sovereign_ai.chroma_store import ChromaStore
 from sovereign_ai.config_loaders import load_models_config, load_rag_config
 from sovereign_ai.ollama_client import OllamaClient
@@ -48,7 +53,11 @@ def run_ask(question: str) -> int:
 
     q_emb = client.embed(question)
     top_k = effective_top_k(question, base_top_k)
-    hits = rerank_hits(question, store.query(q_emb, top_k))
+    primary = store.query(q_emb, top_k)
+    extra_groups = [
+        store.query(client.embed(sq), 4) for sq in supplemental_embed_queries(question)
+    ]
+    hits = rerank_hits(question, merge_hits(primary, *extra_groups))
     if not hits:
         print("向量库为空或无可命中段落，请先运行: python -m sovereign_ai.ingest", file=sys.stderr)
         return 1
