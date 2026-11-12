@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from sovereign_ai.ask.citations import format_citations, select_citation_hits
-from sovereign_ai.ask.rerank import rerank_hits
+from sovereign_ai.ask.rerank import effective_top_k, rerank_hits
 from sovereign_ai.chroma_store import ChromaStore
 from sovereign_ai.config_loaders import load_models_config, load_rag_config
 from sovereign_ai.ollama_client import OllamaClient
@@ -13,7 +13,8 @@ SYSTEM_PROMPT = (
     "若上下文不足以回答，请明确说「上下文未包含相关信息」，不要编造。"
     "用户会用日常中文提问，不会指定 Markdown 小节名；请综合所有检索段落作答。"
     "问开发、后端、接口、实现或计划时，优先采用技术实现相关段落（如 Backend Plan、API、routes），"
-    "不要把范围/不做什么（Scope）当成完整计划。"
+    "不要把范围/不做什么（Scope）或子计划导航索引当成完整计划。"
+    "问 COOP 总体目标时，以「目标与原则」等开篇原则为准。"
     "上下文若含 Backend Plan / Frontend Plan 等技术小节，以其为准作答；能列条就列条，保留 API 路径与字段名等原文标识。"
     "回答使用简体中文，条理清晰。"
 )
@@ -33,7 +34,7 @@ def run_ask(question: str) -> int:
     root = repo_root()
     rag = load_rag_config(root)
     models = load_models_config(root)
-    top_k = int(rag.get("top_k", 5))
+    base_top_k = int(rag.get("top_k", 5))
     cite_k = int(rag.get("cite_k", 1))
     cite_same_source = bool(rag.get("cite_same_source_as_top", True))
     collection = str(rag.get("collection", "default"))
@@ -46,6 +47,7 @@ def run_ask(question: str) -> int:
     )
 
     q_emb = client.embed(question)
+    top_k = effective_top_k(question, base_top_k)
     hits = rerank_hits(question, store.query(q_emb, top_k))
     if not hits:
         print("向量库为空或无可命中段落，请先运行: python -m sovereign_ai.ingest", file=sys.stderr)

@@ -1,3 +1,6 @@
+import re
+
+
 def _question_intent(question: str) -> set[str]:
     q = question.casefold()
     intents: set[str] = set()
@@ -7,13 +10,32 @@ def _question_intent(question: str) -> set[str]:
         intents.add("frontend")
     if any(t in q for t in ("测试", "test", "验收", "回归")):
         intents.add("tests")
+    if any(t in q for t in ("总体目标", "项目目标", "目标是什么", "管什么", "分别管")):
+        intents.add("goals")
     return intents
+
+
+def _coop_ids(question: str) -> list[str]:
+    return list(dict.fromkeys(re.findall(r"COOP-\d+", question, flags=re.I)))
+
+
+def _coop_boost(source: str, text: str, coop_ids: list[str]) -> float:
+    if not coop_ids:
+        return 0.0
+    src = source.casefold()
+    prefix = (text[:160] if text else "").casefold()
+    boost = 0.0
+    for coop in coop_ids:
+        num = coop.split("-", 1)[-1] if "-" in coop else coop
+        if num in src or num in prefix or coop.casefold() in prefix:
+            boost += 0.28
+    return boost
 
 
 def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
     """Lower distance is better; return delta to subtract from distance."""
     h = heading.casefold()
-    prefix = (text[:120] if text else "").casefold()
+    prefix = (text[:160] if text else "").casefold()
     boost = 0.0
     if "backend" in intents:
         if h == "backend plan" or "backend plan" in prefix:
@@ -26,6 +48,11 @@ def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
     if "tests" in intents:
         if h == "tests" or "regression" in prefix:
             boost += 0.35
+    if "goals" in intents:
+        if h == "目标与原则" or "目标与原则" in prefix:
+            boost += 0.45
+        elif h in ("子计划导航", "plan 管理约束"):
+            boost -= 0.3
     return boost
 
 
@@ -33,16 +60,26 @@ def rerank_hits(question: str, hits: list[dict]) -> list[dict]:
     if not hits:
         return hits
     intents = _question_intent(question)
-    if not intents:
-        return hits
+    coop_ids = _coop_ids(question)
 
     def sort_key(h: dict) -> float:
         dist = float(h.get("distance") if h.get("distance") is not None else 1.0)
+        source = str(h.get("source") or "")
+        text = str(h.get("text") or "")
         boost = _heading_boost(
             str(h.get("heading") or ""),
-            str(h.get("text") or ""),
+            text,
             intents,
         )
+        boost += _coop_boost(source, text, coop_ids)
         return dist - boost
 
     return sorted(hits, key=sort_key)
+
+
+def effective_top_k(question: str, base_top_k: int, *, multi_coop_multiplier: int = 2, cap: int = 16) -> int:
+    """Widen retrieval when several COOP tickets are named in one question."""
+    n = len(_coop_ids(question))
+    if n >= 2:
+        return min(cap, max(base_top_k, base_top_k * multi_coop_multiplier))
+    return base_top_k
