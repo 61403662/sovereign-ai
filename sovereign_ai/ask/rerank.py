@@ -15,8 +15,12 @@ def _question_intent(question: str) -> set[str]:
     return intents
 
 
-def _coop_ids(question: str) -> list[str]:
+def coop_ids_from_question(question: str) -> list[str]:
     return list(dict.fromkeys(re.findall(r"COOP-\d+", question, flags=re.I)))
+
+
+def _coop_ids(question: str) -> list[str]:
+    return coop_ids_from_question(question)
 
 
 def _coop_boost(source: str, text: str, coop_ids: list[str]) -> float:
@@ -55,7 +59,16 @@ def _heading_boost(heading: str, text: str, intents: set[str]) -> float:
             boost -= 0.35
         elif any(
             token in heading
-            for token in ("缺口", "单据跟踪", "真实但已有", "条件成立", "已排除")
+            for token in (
+                "缺口",
+                "单据跟踪",
+                "真实但已有",
+                "条件成立",
+                "已排除",
+                "预期拆单",
+                "et/st",
+                "checkpoint",
+            )
         ):
             boost -= 0.45
     return boost
@@ -111,6 +124,33 @@ def supplemental_embed_queries(question: str) -> list[str]:
         for cid in coop_ids:
             queries.append(f"{cid} scope SKUNK pipeline expand AI-POD DoD deployment")
     return queries
+
+
+def _coop_num(coop_id: str) -> str:
+    return coop_id.split("-", 1)[-1] if "-" in coop_id else coop_id
+
+
+def missing_coop_ids(hits: list[dict], coop_ids: list[str]) -> list[str]:
+    if not coop_ids:
+        return []
+    missing: list[str] = []
+    for cid in coop_ids:
+        num = _coop_num(cid)
+        if not any(num in str(h.get("source") or "") for h in hits):
+            missing.append(cid)
+    return missing
+
+
+def per_coop_fallback_queries(coop_id: str) -> list[str]:
+    if coop_id.endswith("22162") or "22162" in coop_id:
+        return [
+            f"{coop_id} SKUNK Pipeline Expand FI FFB DoD getBrotherFeature",
+        ]
+    if coop_id.endswith("22163") or "22163" in coop_id:
+        return [
+            f"{coop_id} AI-POD DoD Deployment 目标与原则 FAN POD PSI",
+        ]
+    return [f"{coop_id} plan scope goals"]
 
 
 def effective_top_k(question: str, base_top_k: int, *, multi_coop_multiplier: int = 2, cap: int = 16) -> int:

@@ -1,6 +1,8 @@
 from sovereign_ai.ask.rerank import (
     effective_top_k,
     merge_hits,
+    missing_coop_ids,
+    per_coop_fallback_queries,
     rerank_hits,
     supplemental_embed_queries,
 )
@@ -66,6 +68,16 @@ def test_supplemental_queries_for_goals_and_multi_coop():
     assert any("目标与原则" in q for q in qs)
     assert any("22162" in q for q in qs)
     assert any("22163" in q for q in qs)
+
+
+def test_missing_coop_ids_detects_absent_file():
+    hits = [{"source": "data/raw/coop-22163_x.plan.md", "heading": "H", "text": "t"}]
+    assert missing_coop_ids(hits, ["COOP-22162", "COOP-22163"]) == ["COOP-22162"]
+
+
+def test_per_coop_fallback_queries():
+    assert "SKUNK" in per_coop_fallback_queries("COOP-22162")[0]
+    assert "目标与原则" in per_coop_fallback_queries("COOP-22163")[0]
 
 
 def test_merge_hits_dedupes():
