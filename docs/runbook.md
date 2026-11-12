@@ -54,7 +54,7 @@ Copy the public sample into private raw (or add your own `.md`):
 copy data\samples\incoming-inspection-sample.md data\raw\
 ```
 
-Ingest strips a leading YAML `---` frontmatter (Cursor `.plan.md` todos) before chunking so body headings are retrieved, not metadata.
+Ingest strips a leading YAML `---` frontmatter (Cursor `.plan.md` todos) before chunking so body headings are retrieved, not metadata. Each chunk prefixes the document/section title in the indexed text so natural-language questions hit the right section.
 
 Ingest (build vectors; use `--reset` to rebuild collection):
 

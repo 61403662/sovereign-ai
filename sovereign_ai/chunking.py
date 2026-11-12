@@ -42,6 +42,28 @@ def split_markdown_sections(text: str) -> list[tuple[str, str]]:
     return [(h, b) for h, b in parts if b]
 
 
+def document_title(text: str) -> str:
+    for line in text.splitlines():
+        m = re.match(r"^#\s+(.+)$", line)
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+def chunk_text_for_index(doc_title: str, heading: str, piece: str) -> str:
+    """Prefix section (and doc title) so embeddings match natural questions."""
+    section = heading or ""
+    if section and doc_title and section != doc_title:
+        prefix = f"{doc_title} > {section}"
+    elif section:
+        prefix = section
+    elif doc_title:
+        prefix = doc_title
+    else:
+        return piece
+    return f"{prefix}\n\n{piece}"
+
+
 def sliding_chunks(body: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     if len(body) <= chunk_size:
         return [body] if body else []
@@ -63,16 +85,18 @@ def chunk_markdown_file(
     chunk_overlap: int,
 ) -> list[TextChunk]:
     text = strip_yaml_frontmatter(path.read_text(encoding="utf-8"))
+    title = document_title(text)
     rel = path.relative_to(root).as_posix()
     out: list[TextChunk] = []
     for heading, body in split_markdown_sections(text):
         for piece in sliding_chunks(body, chunk_size, chunk_overlap):
+            indexed = chunk_text_for_index(title, heading, piece)
             digest = hashlib.sha256(f"{rel}:{heading}:{piece}".encode()).hexdigest()[:16]
             chunk_id = f"{rel}#{digest}"
             out.append(
                 TextChunk(
                     chunk_id=chunk_id,
-                    text=piece,
+                    text=indexed,
                     source=rel,
                     heading=heading or "(无标题)",
                 )
