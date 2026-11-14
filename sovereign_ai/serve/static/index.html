@@ -41,7 +41,15 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
         });
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (_) {
+          status.textContent =
+            `HTTP ${res.status}：${text.slice(0, 240) || "无 JSON（看 serve 窗口 Traceback）"}`;
+          return;
+        }
         if (!data.ok) {
           status.textContent = data.error || "失败";
           return;
@@ -54,7 +62,8 @@
           cites.appendChild(li);
         });
       } catch (e) {
-        status.textContent = "请求失败（服务未启动？）";
+        status.textContent =
+          "无法连接 /api/ask（serve 窗口是否仍开着？地址须为 http://127.0.0.1:8787 ）";
       } finally {
         go.disabled = false;
       }

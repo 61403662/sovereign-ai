@@ -277,6 +277,26 @@ ssh -N -L 8787:127.0.0.1:8787 deploy
 
 Start `python -m sovereign_ai.serve` on Deploy first.
 
+### Serve page loads but “提问” fails
+
+1. **Leave the `serve.cmd` window open** while using the browser; closing it kills the API.
+2. URL must be **`http://127.0.0.1:8787/`** (same host as uvicorn), not a saved HTML file or IDE preview on another port.
+3. On Deploy, confirm CLI still works:
+
+```powershell
+.\.venv\Scripts\python.exe -m sovereign_ai.ask "测试"
+ollama list
+```
+
+4. Test API directly:
+
+```powershell
+curl http://127.0.0.1:8787/health
+curl -X POST http://127.0.0.1:8787/api/ask -H "Content-Type: application/json" -d "{\"question\":\"测试\"}"
+```
+
+5. After `git pull`, restart `serve.cmd` (static `index.html` is read from disk on each full page load).
+
 ## Deploy acceptance checklist (after `git pull`)
 
 - [ ] `git status` clean (except untracked `models.yaml`, `data/raw`, `storage`)

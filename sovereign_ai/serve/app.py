@@ -22,7 +22,15 @@ def index() -> FileResponse:
 
 @app.post("/api/ask")
 def api_ask(body: AskRequest) -> dict:
-    result = ask_question(body.question)
+    try:
+        result = ask_question(body.question)
+    except Exception as e:  # noqa: BLE001 — surface to UI (local only)
+        return {
+            "ok": False,
+            "error": f"服务端异常: {e!s}",
+            "answer": "",
+            "citations": [],
+        }
     if not result["ok"]:
         return {
             "ok": False,
