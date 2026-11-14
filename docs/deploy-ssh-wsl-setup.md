@@ -4,10 +4,22 @@
 
 ## A. Deploy（管理员 PowerShell，一次）
 
+**必须「以管理员身份运行」PowerShell**（窗口标题含 Administrator）。普通窗口里 `Get-WindowsCapability` 会报错。
+
 ```powershell
 cd E:\sovereign-ai-repo
 git pull
 powershell -ExecutionPolicy Bypass -File .\scripts\deploy-openssh-server.ps1
+```
+
+若 DISM/能力安装失败，用图形界面安装（无需 DISM）：
+
+1. **设置** → **应用** → **可选功能**（或「已安装的应用」→ **可选功能**）
+2. **添加功能** → 搜 **OpenSSH 服务器** → 安装
+3. 再执行（只启动服务）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-openssh-server.ps1 -SkipInstall
 ```
 
 记下脚本打印的 **IPv4**（例如 `192.168.x.x`）。
