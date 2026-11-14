@@ -297,6 +297,16 @@ curl -X POST http://127.0.0.1:8787/api/ask -H "Content-Type: application/json" -
 
 5. After `git pull`, restart `serve.cmd` (static `index.html` is read from disk on each full page load).
 
+6. Log shows **`500` for `http://127.0.0.1:11434/api/chat`** — serve is fine; **Ollama chat** failed (VRAM, model missing, or Ollama stuck). Fix Ollama first:
+
+```powershell
+ollama list
+ollama ps
+curl http://127.0.0.1:11434/api/tags
+ollama run qwen2.5:7b-instruct-q4_K_M
+# then retry CLI ask; restart Ollama app if 500 persists
+```
+
 ## Deploy acceptance checklist (after `git pull`)
 
 - [ ] `git status` clean (except untracked `models.yaml`, `data/raw`, `storage`)

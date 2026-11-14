@@ -43,7 +43,13 @@ class OllamaClient:
         }
         with httpx.Client(timeout=self.timeout) as client:
             r = client.post(f"{self.base_url}/api/chat", json=payload)
-            r.raise_for_status()
+            try:
+                r.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                detail = (r.text or "")[:500]
+                raise RuntimeError(
+                    f"Ollama chat HTTP {r.status_code} (model={self.chat_model!r}): {detail}"
+                ) from e
             data = r.json()
         msg = data.get("message") or {}
         content = msg.get("content")
