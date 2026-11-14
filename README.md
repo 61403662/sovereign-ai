@@ -42,6 +42,8 @@ pytest tests/test_chunking.py -q
 
 Production **ingest/ask** runs on **Deploy** with local Ollama; see [`docs/runbook.md`](docs/runbook.md).
 
+**SSH pull + local UI (05/06):** Git over SSH on Deploy; optional `pip install -e ".[serve]"` and `python -m sovereign_ai.serve` (127.0.0.1:8787).
+
 ## Quick start (Phase 1 RAG on Deploy)
 
 ```powershell

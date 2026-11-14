@@ -1,0 +1,1 @@
+"""Local HTTP ask UI (127.0.0.1 only). Install with pip install -e '.[serve]'."""

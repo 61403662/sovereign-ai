@@ -1,7 +1,12 @@
 import argparse
 import sys
+from typing import Any
 
-from sovereign_ai.ask.citations import format_citations, select_citation_hits
+from sovereign_ai.ask.citations import (
+    citation_records,
+    format_citations,
+    select_citation_hits,
+)
 from sovereign_ai.ask.rerank import (
     coop_ids_from_question,
     effective_top_k,
@@ -40,7 +45,12 @@ def format_context(hits: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
-def run_ask(question: str) -> int:
+def ask_question(question: str) -> dict[str, Any]:
+    """Run RAG ask; return structured result for CLI, HTTP, and tests."""
+    question = (question or "").strip()
+    if not question:
+        return {"ok": False, "error": "question is required", "answer": "", "citations": []}
+
     root = repo_root()
     rag = load_rag_config(root)
     models = load_models_config(root)
@@ -71,8 +81,12 @@ def run_ask(question: str) -> int:
     if len(coop_ids) >= 2:
         hits = ensure_coop_coverage(hits, coop_ids)
     if not hits:
-        print("向量库为空或无可命中段落，请先运行: python -m sovereign_ai.ingest", file=sys.stderr)
-        return 1
+        return {
+            "ok": False,
+            "error": "向量库为空或无可命中段落，请先运行: python -m sovereign_ai.ingest",
+            "answer": "",
+            "citations": [],
+        }
 
     context = format_context(hits)
     user_content = f"检索上下文:\n\n{context}\n\n问题: {question}"
@@ -83,14 +97,30 @@ def run_ask(question: str) -> int:
             {"role": "user", "content": user_content},
         ]
     )
-    print(answer)
     cite_hits = select_citation_hits(
         hits,
         cite_k=cite_k,
         same_source_as_top=cite_same_source,
         coop_ids=coop_ids if len(coop_ids) >= 2 else None,
     )
-    print(format_citations(cite_hits))
+    citations = citation_records(cite_hits)
+    citations_text = format_citations(cite_hits)
+    return {
+        "ok": True,
+        "error": None,
+        "answer": answer,
+        "citations": citations,
+        "citations_text": citations_text,
+    }
+
+
+def run_ask(question: str) -> int:
+    result = ask_question(question)
+    if not result["ok"]:
+        print(result["error"], file=sys.stderr)
+        return 1
+    print(result["answer"])
+    print(result.get("citations_text") or format_citations([]))
     return 0
 
 

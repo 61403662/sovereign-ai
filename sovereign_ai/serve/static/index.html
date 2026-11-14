@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>sovereign-ai 本地问答</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 1.5rem auto; padding: 0 1rem; line-height: 1.5; }
+    h1 { font-size: 1.25rem; font-weight: 600; }
+    textarea { width: 100%; min-height: 5rem; font-size: 1rem; padding: 0.5rem; }
+    button { margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    #answer { white-space: pre-wrap; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>本地文档问答</h1>
+  <p>仅本机 127.0.0.1；数据与模型在 Deploy，不经公网。</p>
+  <label for="q">问题</label>
+  <textarea id="q" placeholder="输入问题…"></textarea>
+  <button type="button" id="go">提问</button>
+  <p id="status" aria-live="polite"></p>
+  <div id="answer"></div>
+  <ul id="cites"></ul>
+  <script>
+    const q = document.getElementById("q");
+    const go = document.getElementById("go");
+    const status = document.getElementById("status");
+    const answer = document.getElementById("answer");
+    const cites = document.getElementById("cites");
+    go.addEventListener("click", async () => {
+      const question = q.value.trim();
+      if (!question) return;
+      go.disabled = true;
+      status.textContent = "检索与生成中…";
+      answer.textContent = "";
+      cites.innerHTML = "";
+      try {
+        const res = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          status.textContent = data.error || "失败";
+          return;
+        }
+        status.textContent = "";
+        answer.textContent = data.answer || "";
+        (data.citations || []).forEach((c) => {
+          const li = document.createElement("li");
+          li.textContent = `${c.source || ""}#${c.heading || ""}`;
+          cites.appendChild(li);
+        });
+      } catch (e) {
+        status.textContent = "请求失败（服务未启动？）";
+      } finally {
+        go.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

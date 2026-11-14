@@ -1,4 +1,8 @@
-from sovereign_ai.ask.citations import format_citations, select_citation_hits
+from sovereign_ai.ask.citations import (
+    citation_records,
+    format_citations,
+    select_citation_hits,
+)
 
 
 def test_select_citation_hits_same_source_only():
@@ -45,6 +49,18 @@ def test_select_citation_hits_one_per_named_coop():
     assert "22163" in selected[1]["source"]
     assert selected[0]["heading"] == "Scope"
     assert selected[1]["heading"] == "目标与原则"
+
+
+def test_citation_records_structured():
+    hits = [
+        {"source": "a.md", "heading": "H1", "text": "x"},
+        {"source": "b.md", "heading": "H2", "text": "y"},
+    ]
+    rec = citation_records(hits)
+    assert rec == [
+        {"source": "a.md", "heading": "H1"},
+        {"source": "b.md", "heading": "H2"},
+    ]
 
 
 def test_format_citations_dedupes_heading():

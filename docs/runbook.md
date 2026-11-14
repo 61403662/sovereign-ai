@@ -88,6 +88,16 @@ git remote set-url origin git@github.com:61403662/sovereign-ai.git
 git pull
 ```
 
+**Verify SSH remote (after `git remote set-url`):**
+
+```powershell
+cd E:\sovereign-ai-repo
+git remote -v
+# origin  git@github.com:61403662/sovereign-ai.git (fetch/push)
+git pull
+git log -1 --oneline
+```
+
 ### Step C — Emergency sync without Git on Deploy
 
 When HTTPS/SSH both blocked temporarily, pull on **WSL Dev** and copy into the Deploy tree (`data\raw` and `storage\` are untouched):
@@ -190,6 +200,69 @@ Edit only when changing tags or `ollama_base_url`.
 
 - Keep Ollama on **127.0.0.1** unless you knowingly expose LAN for debugging.
 - Back up `data/` and `storage/` locally; they are not on GitHub.
+
+## SSH — GitHub from Deploy (summary)
+
+| Step | Action |
+|------|--------|
+| 1 | `ssh-keygen -t ed25519 -f %USERPROFILE%\.ssh\id_ed25519_github` (empty passphrase ok on single-user Deploy) |
+| 2 | Copy `.pub` → GitHub **Settings → SSH and GPG keys** |
+| 3 | `ssh -T git@github.com` (first time: type `yes`) |
+| 4 | `git remote set-url origin git@github.com:61403662/sovereign-ai.git` |
+| 5 | `git pull` |
+
+HTTPS doctor (`.cmd`) remains valid; SSH is optional but often more stable than HTTPS 443.
+
+## SSH — Windows OpenSSH Server (WSL → Deploy)
+
+Use when you want to **remote `pull` / `ask` from WSL** without sitting at the Deploy PC.
+
+**One-time on Deploy (Admin PowerShell):**
+
+```powershell
+Get-WindowsCapability -Online | Where-Object Name -like "OpenSSH.Server*"
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Start-Service sshd
+Set-Service -Name sshd -StartupType Automatic
+# Firewall: allow TCP 22 for Private network if prompted
+```
+
+**One-time on WSL** (`~/.ssh/config` — copy from `docs/ssh-wsl-config.example`, edit `HostName` / `User`):
+
+```sshconfig
+Host deploy
+  HostName 192.168.x.x
+  User YourWindowsUser
+```
+
+**Remote ask (example):**
+
+```bash
+ssh deploy 'cd /d E:\sovereign-ai-repo && .\.venv\Scripts\python.exe -m sovereign_ai.ask "你的问题"'
+```
+
+`git pull` over SSH to **GitHub** is separate from logging into **Deploy**; both use SSH keys but different hosts (`github.com` vs your LAN IP).
+
+## Local ask UI (`127.0.0.1` only)
+
+For **06** browser Q&A on Deploy (no public internet). Requires Ollama + indexed chroma.
+
+```powershell
+cd E:\sovereign-ai-repo
+.\.venv\Scripts\python.exe -m pip install -e ".[serve]"
+.\scripts\serve.cmd
+```
+
+Open `http://127.0.0.1:8787`. **Do not** bind `0.0.0.0` without a deliberate LAN policy.
+
+**From WSL (notebook) via tunnel** (after `Host deploy` works):
+
+```bash
+ssh -N -L 8787:127.0.0.1:8787 deploy
+# Another terminal or browser on WSL: http://127.0.0.1:8787
+```
+
+Start `python -m sovereign_ai.serve` on Deploy first.
 
 ## Deploy acceptance checklist (after `git pull`)
 

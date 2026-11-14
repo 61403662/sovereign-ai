@@ -34,6 +34,21 @@ def select_citation_hits(
     return pool[:cite_k]
 
 
+def citation_records(hits: list[dict]) -> list[dict]:
+    """Structured citations for CLI, API, and tests."""
+    out: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for h in hits:
+        src = str(h.get("source") or "")
+        heading = str(h.get("heading") or "")
+        key = (src, heading)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"source": src, "heading": heading})
+    return out
+
+
 def format_citations(hits: list[dict]) -> str:
     lines = ["", "---", "引用来源:"]
     seen: set[tuple[str, str]] = set()
