@@ -249,7 +249,20 @@ For **06** browser Q&A on Deploy (no public internet). Requires Ollama + indexed
 
 ```powershell
 cd E:\sovereign-ai-repo
-.\.venv\Scripts\python.exe -m pip install -e ".[serve]"
+git pull
+```
+
+If **`ingest` / `ask` already work**, do **not** reinstall chromadb. Only add HTTP deps (avoids MSVC / `chroma-hnswlib` build):
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install "fastapi>=0.115.0" "uvicorn[standard]>=0.32.0"
+.\.venv\Scripts\python.exe -m pip install -e . --no-deps
+.\scripts\serve.cmd
+```
+
+Fresh venv only: use Python **3.12**, then `pip install -r requirements.txt`, `pip install -e .`, then the two `fastapi`/`uvicorn` lines above—not `pip install -e ".[serve]"` on Windows unless you have **Build Tools**.
+
+```powershell
 .\scripts\serve.cmd
 ```
 
