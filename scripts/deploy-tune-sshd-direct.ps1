@@ -22,7 +22,8 @@ elseif ($globalPart -notmatch "(?m)^GSSAPIAuthentication\s") {
   $text = $globalPart.TrimEnd() + "`nGSSAPIAuthentication no`n" + $text.Substring($matchIndex)
 }
 
-Set-Content -Path $cfg -Value $text -Encoding utf8
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($cfg, $text, $utf8NoBom)
 & C:\Windows\System32\OpenSSH\sshd.exe -t
 Restart-Service sshd
 Write-Host "sshd tuned. From dev: ssh deploy-direct hostname"
