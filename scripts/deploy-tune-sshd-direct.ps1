@@ -7,8 +7,7 @@ $lines = Get-Content $cfg
 $insert = @(
   "",
   "# --- sovereign-ai direct cable (global, must be above any Match block) ---",
-  "UseDNS no",
-  "GSSAPIAuthentication no"
+  "UseDNS no"
 )
 
 # Append only if not already set globally (simple check)
@@ -18,12 +17,15 @@ if ($matchIndex -lt 0) { $matchIndex = $text.Length }
 
 $globalPart = $text.Substring(0, $matchIndex)
 if ($globalPart -notmatch "(?m)^UseDNS\s") { $text = $globalPart.TrimEnd() + "`n" + ($insert -join "`n") + "`n" + $text.Substring($matchIndex) }
-elseif ($globalPart -notmatch "(?m)^GSSAPIAuthentication\s") {
-  $text = $globalPart.TrimEnd() + "`nGSSAPIAuthentication no`n" + $text.Substring($matchIndex)
 }
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($cfg, $text, $utf8NoBom)
-& C:\Windows\System32\OpenSSH\sshd.exe -t
+$sshd = if (Test-Path "C:\Program Files\OpenSSH\sshd.exe") {
+    "C:\Program Files\OpenSSH\sshd.exe"
+} else {
+    "C:\Windows\System32\OpenSSH\sshd.exe"
+}
+& $sshd -t -f $cfg
 Restart-Service sshd
 Write-Host "sshd tuned. From dev: ssh deploy-direct hostname"
