@@ -1,0 +1,1 @@
+"""Phase 2: read-only BOM / supplier queries over local SQLite."""

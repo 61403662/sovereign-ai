@@ -167,6 +167,43 @@ Ask lightly re-ranks hits when the question mentions 后端/前端/测试 (maps 
 
 Expect an answer citing `data/raw/incoming-inspection-sample.md` and section headings.
 
+## Phase 2 — Fan BOM (SQLite)
+
+Fictional schema in `schema/fan_bom.sql`; sample seed in `data/samples/fan/seed.example.sql`. DB lives at `storage/sqlite/fan_bom.db` (gitignored).
+
+One-time:
+
+```powershell
+.\scripts\bom-init.ps1
+```
+
+Try SQL-side answers (no LLM; numbers from DB):
+
+```powershell
+.\.venv\Scripts\python.exe -m sovereign_ai.ask "扇叶划痕能否让步接收？"
+.\.venv\Scripts\python.exe -m sovereign_ai.bom "XF-120 的 BOM 有哪些料？"
+.\.venv\Scripts\python.exe -m sovereign_ai.bom "做一台 XF-120 材料费多少钱？"
+```
+
+Document questions still use Phase 1 `ask`; BOM/price questions use `sovereign_ai.bom` until unified router lands in a later PR.
+
+### Regression (`eval/qa.sample.jsonl`)
+
+After ingest, run fixed questions (requires Ollama + populated chroma):
+
+```powershell
+.\scripts\eval.ps1
+# or: .\.venv\Scripts\python.exe -m sovereign_ai.eval
+```
+
+Custom file:
+
+```powershell
+.\.venv\Scripts\python.exe -m sovereign_ai.eval eval\qa.example.jsonl
+```
+
+Each JSONL line: `question`, optional `expected_contains` (all must appear in answer), optional `expected_source` (substring match on citation `source`). Exit code **1** if any case fails—suitable before a journal screenshot or after changing rerank/ingest.
+
 ## Ollama smoke
 
 ```powershell

@@ -42,6 +42,10 @@ pytest tests/test_chunking.py -q
 
 Production **ingest/ask** runs on **Deploy** with local Ollama; see [`docs/runbook.md`](docs/runbook.md).
 
+**Regression:** after ingest on Deploy, `python -m sovereign_ai.eval` or `.\scripts\eval.ps1` (see `eval/qa.sample.jsonl`).
+
+**Phase 2 (BOM/SQL):** `.\scripts\bom-init.ps1` then `python -m sovereign_ai.bom "XF-120 的 BOM 有哪些料？"` — numbers from SQLite, not the LLM.
+
 **SSH pull + local UI (05/06):** Git over SSH on Deploy; optional `pip install -e ".[serve]"` and `python -m sovereign_ai.serve` (127.0.0.1:8787).
 
 ## Quick start (Phase 1 RAG on Deploy)

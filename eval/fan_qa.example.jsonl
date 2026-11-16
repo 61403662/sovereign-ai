@@ -1,0 +1,3 @@
+{"question": "XF-120 的 BOM 有哪些料？", "route": "sql", "expected_contains": ["M-BLADE-ABS", "M-MOTOR-DC"], "expected_numeric": null}
+{"question": "做一台 XF-120 材料费多少钱？", "route": "sql", "expected_contains": ["26.7", "CNY"], "expected_numeric": 26.7}
+{"question": "材料 M-BLADE-ABS 哪家最便宜？", "route": "sql", "expected_contains": ["SUP-ALPHA", "2.8"], "expected_numeric": null}
