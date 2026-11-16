@@ -68,7 +68,7 @@ def answer_bom_question(question: str, root=None) -> dict[str, Any]:
                 "data": result,
             }
 
-        if intent in (BomIntent.LIST_BOM, BomIntent.UNKNOWN):
+        if intent == BomIntent.LIST_BOM:
             rows = list_bom(conn, model)
             if not rows:
                 return {"ok": False, "route": "sql", "error": f"无 BOM: {model}", "answer": ""}
@@ -84,6 +84,11 @@ def answer_bom_question(question: str, root=None) -> dict[str, Any]:
                 "data": {"model_code": model, "lines": [r.__dict__ for r in rows]},
             }
 
-        return {"ok": False, "route": "sql", "error": "无法分类此 BOM 问题", "answer": ""}
+        return {
+            "ok": False,
+            "route": "sql",
+            "error": "无法处理此 BOM 问题（请写明型号 XF-xxx 或材料编码 M-…）",
+            "answer": "",
+        }
     finally:
         conn.close()

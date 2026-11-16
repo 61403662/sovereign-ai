@@ -41,8 +41,10 @@ def api_ask(body: AskRequest) -> dict:
     return {
         "ok": True,
         "error": None,
+        "route": result.get("route"),
         "answer": result["answer"],
         "citations": result["citations"],
+        "citations_text": result.get("citations_text"),
     }
 
 

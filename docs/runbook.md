@@ -185,7 +185,7 @@ Try SQL-side answers (no LLM; numbers from DB):
 .\.venv\Scripts\python.exe -m sovereign_ai.bom "做一台 XF-120 材料费多少钱？"
 ```
 
-Document questions still use Phase 1 `ask`; BOM/price questions use `sovereign_ai.bom` until unified router lands in a later PR.
+**Unified `ask`:** `python -m sovereign_ai.ask` and `serve` now auto-route BOM/价格/供应商类问题到 SQLite，其余走 RAG. CLI prints `[route: sql]` or `[route: rag]`. Direct BOM debugging: `python -m sovereign_ai.bom "…"`.
 
 ### Regression (`eval/qa.sample.jsonl`)
 

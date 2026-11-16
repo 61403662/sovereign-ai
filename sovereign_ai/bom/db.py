@@ -6,12 +6,15 @@ from pathlib import Path
 from sovereign_ai.paths import repo_root
 
 
-def db_path(root: Path | None = None) -> Path:
-    root = root or repo_root()
+def db_path(root: Path | str | None = None) -> Path:
+    if root is None:
+        root = repo_root()
+    else:
+        root = Path(root)
     return root / "storage" / "sqlite" / "fan_bom.db"
 
 
-def connect(root: Path | None = None) -> sqlite3.Connection:
+def connect(root: Path | str | None = None) -> sqlite3.Connection:
     path = db_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
@@ -20,8 +23,8 @@ def connect(root: Path | None = None) -> sqlite3.Connection:
     return conn
 
 
-def init_database(root: Path | None = None, *, reset: bool = False) -> Path:
-    root = root or repo_root()
+def init_database(root: Path | str | None = None, *, reset: bool = False) -> Path:
+    root = Path(root) if root is not None else repo_root()
     path = db_path(root)
     if reset and path.is_file():
         path.unlink()
@@ -38,7 +41,7 @@ def init_database(root: Path | None = None, *, reset: bool = False) -> Path:
     return path
 
 
-def database_ready(root: Path | None = None) -> bool:
+def database_ready(root: Path | str | None = None) -> bool:
     path = db_path(root)
     if not path.is_file():
         return False

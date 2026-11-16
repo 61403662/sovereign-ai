@@ -45,8 +45,8 @@ def format_context(hits: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
-def ask_question(question: str) -> dict[str, Any]:
-    """Run RAG ask; return structured result for CLI, HTTP, and tests."""
+def ask_rag(question: str) -> dict[str, Any]:
+    """RAG-only ask (Chroma + Ollama)."""
     question = (question or "").strip()
     if not question:
         return {"ok": False, "error": "question is required", "answer": "", "citations": []}
@@ -114,13 +114,72 @@ def ask_question(question: str) -> dict[str, Any]:
     }
 
 
+def ask_question(question: str) -> dict[str, Any]:
+    """Unified ask: BOM/SQL when matched, else RAG."""
+    question = (question or "").strip()
+    if not question:
+        return {
+            "ok": False,
+            "route": "rag",
+            "error": "question is required",
+            "answer": "",
+            "citations": [],
+        }
+
+    from sovereign_ai.ask.route import should_use_bom
+    from sovereign_ai.bom.router import BomIntent, classify_bom_question
+    from sovereign_ai.bom.runner import answer_bom_question
+
+    if should_use_bom(question):
+        bom = answer_bom_question(question)
+        if bom.get("ok"):
+            return {
+                "ok": True,
+                "route": "sql",
+                "intent": bom.get("intent"),
+                "error": None,
+                "answer": bom["answer"],
+                "citations": [],
+                "citations_text": "引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）",
+            }
+        return {
+            "ok": False,
+            "route": "sql",
+            "error": bom.get("error") or "BOM 查询失败",
+            "answer": "",
+            "citations": [],
+            "citations_text": "",
+        }
+
+    if classify_bom_question(question) != BomIntent.UNKNOWN:
+        from sovereign_ai.bom.db import database_ready
+        from sovereign_ai.paths import repo_root
+
+        if not database_ready(repo_root()):
+            return {
+                "ok": False,
+                "route": "sql",
+                "error": "识别为 BOM 问题，但库未初始化。请运行: scripts\\bom-init.cmd",
+                "answer": "",
+                "citations": [],
+            }
+
+    rag = ask_rag(question)
+    rag["route"] = "rag"
+    return rag
+
+
 def run_ask(question: str) -> int:
     result = ask_question(question)
     if not result["ok"]:
         print(result["error"], file=sys.stderr)
         return 1
+    route = result.get("route") or "rag"
+    print(f"[route: {route}]")
     print(result["answer"])
-    print(result.get("citations_text") or format_citations([]))
+    footer = result.get("citations_text") or format_citations(result.get("citations") or [])
+    if footer:
+        print(footer)
     return 0
 
 

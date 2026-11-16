@@ -54,8 +54,14 @@
           status.textContent = data.error || "失败";
           return;
         }
-        status.textContent = "";
+        status.textContent = data.route ? `路由: ${data.route}` : "";
         answer.textContent = data.answer || "";
+        cites.innerHTML = "";
+        if (data.citations_text) {
+          const li = document.createElement("li");
+          li.textContent = data.citations_text;
+          cites.appendChild(li);
+        }
         (data.citations || []).forEach((c) => {
           const li = document.createElement("li");
           li.textContent = `${c.source || ""}#${c.heading || ""}`;
