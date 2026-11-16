@@ -155,8 +155,10 @@ Ingest strips a leading YAML `---` frontmatter (Cursor `.plan.md` todos) before 
 Ingest (build vectors; use `--reset` to rebuild collection):
 
 ```powershell
-.\scripts\ingest.ps1 --reset
+.\scripts\ingest.cmd --reset
 ```
+
+If ExecutionPolicy blocks `.ps1`, use `.cmd` wrappers (same as `deploy-pull.cmd`).
 
 Ask lightly re-ranks hits when the question mentions 后端/前端/测试 (maps to `Backend Plan`, etc.). Must show **引用来源** at end; default `cite_k: 1` — only top hit after re-rank, same file as rank-1:
 
@@ -289,7 +291,7 @@ cd E:\sovereign-ai-repo
 git pull
 ```
 
-If **`ingest` / `ask` already work**, do **not** reinstall chromadb. Only add HTTP deps (avoids MSVC / `chroma-hnswlib` build):
+If **`ingest` / `ask` already work**, do **not** reinstall chromadb. `ingest.cmd` skips `pip` when `import chromadb` succeeds (avoids MSVC / `chroma-hnswlib` build). Only add HTTP deps when needed:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install "fastapi>=0.115.0" "uvicorn[standard]>=0.32.0"
