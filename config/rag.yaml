@@ -5,3 +5,5 @@ cite_k: 1
 # 引用来源仅来自与排名第 1 的 chunk 同一文件的检索结果
 cite_same_source_as_top: true
 collection: "default"
+# SQL/BOM 路由：用 Ollama 把结构化查询结果写成自然中文（数字仍以 DB 为准，失败则回退模板）
+sql_nl_format: false

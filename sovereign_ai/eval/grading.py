@@ -14,6 +14,7 @@ class QaCase:
     question: str
     expected_contains: list[str]
     expected_source: str | None
+    expected_route: str | None = None
 
 
 @dataclass
@@ -47,12 +48,15 @@ def load_jsonl(path: Path) -> list[QaCase]:
         expected_contains = [str(x) for x in raw_contains]
         src = row.get("expected_source")
         expected_source = None if src is None else str(src)
+        route_raw = row.get("expected_route", row.get("route"))
+        expected_route = None if route_raw is None else str(route_raw).strip().lower()
         cases.append(
             QaCase(
                 line_no=line_no,
                 question=question,
                 expected_contains=expected_contains,
                 expected_source=expected_source,
+                expected_route=expected_route,
             )
         )
     return cases
@@ -88,6 +92,18 @@ def grade_case(case: QaCase, result: dict[str, Any]) -> QaVerdict:
             answer=answer,
             citations=citations,
         )
+
+    if case.expected_route:
+        actual = str(result.get("route") or "").strip().lower()
+        if actual != case.expected_route:
+            return QaVerdict(
+                case=case,
+                passed=False,
+                detail=f"expected route {case.expected_route!r}, got {actual!r}",
+                ok=True,
+                answer=answer,
+                citations=citations,
+            )
 
     if case.expected_source:
         sources = [str(c.get("source") or "") for c in citations]

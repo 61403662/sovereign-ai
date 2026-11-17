@@ -23,17 +23,28 @@ def connect(root: Path | str | None = None) -> sqlite3.Connection:
     return conn
 
 
-def init_database(root: Path | str | None = None, *, reset: bool = False) -> Path:
+def init_schema(root: Path | str | None = None, *, reset: bool = False) -> Path:
     root = Path(root) if root is not None else repo_root()
     path = db_path(root)
     if reset and path.is_file():
         path.unlink()
     path.parent.mkdir(parents=True, exist_ok=True)
     schema = (root / "schema" / "fan_bom.sql").read_text(encoding="utf-8")
-    seed = (root / "data" / "samples" / "fan" / "seed.example.sql").read_text(encoding="utf-8")
     conn = sqlite3.connect(path)
     try:
         conn.executescript(schema)
+        conn.commit()
+    finally:
+        conn.close()
+    return path
+
+
+def init_database(root: Path | str | None = None, *, reset: bool = False) -> Path:
+    root = Path(root) if root is not None else repo_root()
+    path = init_schema(root, reset=reset)
+    seed = (root / "data" / "samples" / "fan" / "seed.example.sql").read_text(encoding="utf-8")
+    conn = sqlite3.connect(path)
+    try:
         conn.executescript(seed)
         conn.commit()
     finally:

@@ -133,12 +133,15 @@ def ask_question(question: str) -> dict[str, Any]:
     if should_use_bom(question):
         bom = answer_bom_question(question)
         if bom.get("ok"):
+            from sovereign_ai.bom.nl_format import maybe_naturalize_sql_answer
+
+            answer = maybe_naturalize_sql_answer(question, bom)
             return {
                 "ok": True,
                 "route": "sql",
                 "intent": bom.get("intent"),
                 "error": None,
-                "answer": bom["answer"],
+                "answer": answer,
                 "citations": [],
                 "citations_text": "引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）",
             }

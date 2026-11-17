@@ -173,11 +173,14 @@ Expect an answer citing `data/raw/incoming-inspection-sample.md` and section hea
 
 Fictional schema in `schema/fan_bom.sql`; sample seed in `data/samples/fan/seed.example.sql`. DB lives at `storage/sqlite/fan_bom.db` (gitignored).
 
-One-time:
+One-time (SQL seed **or** CSV — same fictional data):
 
 ```powershell
-.\scripts\bom-init.ps1
+.\scripts\bom-init.cmd
+# alternate: .\scripts\bom-import.cmd
 ```
+
+CSV samples live in `data/samples/fan/csv/`; private exports can mirror those filenames locally (stay gitignored under `data/` if real).
 
 Try SQL-side answers (no LLM; numbers from DB):
 
@@ -188,6 +191,10 @@ Try SQL-side answers (no LLM; numbers from DB):
 ```
 
 **Unified `ask`:** `python -m sovereign_ai.ask` and `serve` now auto-route BOM/价格/供应商类问题到 SQLite，其余走 RAG. CLI prints `[route: sql]` or `[route: rag]`. Direct BOM debugging: `python -m sovereign_ai.bom "…"`.
+
+**SQL 自然语言：** `config/rag.yaml` → `sql_nl_format: true` 时，统一 `ask` 的 SQL 答案经 Ollama **润色**（数字仍以 DB 为准，失败回退模板）。默认 **false**，便于 eval 与 07 模板一致。
+
+**Eval 双轨：** `.\scripts\eval-all.cmd` 或 `python -m sovereign_ai.eval --all` — `qa.sample.jsonl` + `fan_qa.example.jsonl`（含 `route: sql` 校验）。
 
 ### Regression (`eval/qa.sample.jsonl`)
 

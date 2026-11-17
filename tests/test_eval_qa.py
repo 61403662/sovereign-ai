@@ -7,6 +7,7 @@ def _case(**kwargs) -> QaCase:
         "question": "q",
         "expected_contains": [],
         "expected_source": None,
+        "expected_route": None,
     }
     defaults.update(kwargs)
     return QaCase(**defaults)
@@ -52,3 +53,17 @@ def test_grade_ask_error():
     v = grade_case(c, {"ok": False, "error": "chroma empty", "answer": "", "citations": []})
     assert not v.passed
     assert "chroma empty" in v.detail
+
+
+def test_grade_sql_route():
+    c = _case(expected_contains=["26.7"], expected_route="sql")
+    result = {"ok": True, "route": "sql", "answer": "合计 26.7 CNY", "citations": []}
+    assert grade_case(c, result).passed
+
+
+def test_grade_route_mismatch():
+    c = _case(expected_route="sql")
+    result = {"ok": True, "route": "rag", "answer": "x", "citations": []}
+    v = grade_case(c, result)
+    assert not v.passed
+    assert "route" in v.detail
