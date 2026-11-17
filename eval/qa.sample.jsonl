@@ -4,4 +4,4 @@
 {"question": "耐压测试条件是什么？", "expected_contains": ["500 V", "1 min"], "expected_source": "data/samples/incoming-inspection-sample.md"}
 {"question": "绝缘电阻低于多少不合格？", "expected_contains": ["10 MΩ"], "expected_source": "data/samples/incoming-inspection-sample.md"}
 {"question": "铭牌型号与采购单不一致怎么处理？", "expected_contains": ["隔离"], "expected_source": "data/samples/incoming-inspection-sample.md"}
-{"question": "火星上风机检验标准是什么？", "expected_contains": ["未包含", "无法", "没有"], "expected_source": null}
+{"question": "火星上风机检验标准是什么？", "expected_contains_any": ["未包含", "无法", "没有"], "expected_source": null}

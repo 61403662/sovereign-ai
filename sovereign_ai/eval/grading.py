@@ -15,6 +15,7 @@ class QaCase:
     expected_contains: list[str]
     expected_source: str | None
     expected_route: str | None = None
+    expected_contains_any: list[str] | None = None
 
 
 @dataclass
@@ -50,6 +51,12 @@ def load_jsonl(path: Path) -> list[QaCase]:
         expected_source = None if src is None else str(src)
         route_raw = row.get("expected_route", row.get("route"))
         expected_route = None if route_raw is None else str(route_raw).strip().lower()
+        any_raw = row.get("expected_contains_any")
+        expected_contains_any: list[str] | None = None
+        if any_raw:
+            if isinstance(any_raw, str):
+                any_raw = [any_raw]
+            expected_contains_any = [str(x) for x in any_raw]
         cases.append(
             QaCase(
                 line_no=line_no,
@@ -57,9 +64,16 @@ def load_jsonl(path: Path) -> list[QaCase]:
                 expected_contains=expected_contains,
                 expected_source=expected_source,
                 expected_route=expected_route,
+                expected_contains_any=expected_contains_any,
             )
         )
     return cases
+
+
+def _answer_has_needle(answer: str, needle: str) -> bool:
+    if needle in answer:
+        return True
+    return _normalize(needle) in _normalize(answer)
 
 
 def grade_case(case: QaCase, result: dict[str, Any]) -> QaVerdict:
@@ -75,6 +89,17 @@ def grade_case(case: QaCase, result: dict[str, Any]) -> QaVerdict:
             answer=answer,
             citations=citations,
         )
+
+    if case.expected_contains_any:
+        if not any(_answer_has_needle(answer, n) for n in case.expected_contains_any):
+            return QaVerdict(
+                case=case,
+                passed=False,
+                detail=f"answer missing any of {case.expected_contains_any!r}",
+                ok=True,
+                answer=answer,
+                citations=citations,
+            )
 
     missing: list[str] = []
     for needle in case.expected_contains:

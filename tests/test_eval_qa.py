@@ -67,3 +67,15 @@ def test_grade_route_mismatch():
     v = grade_case(c, result)
     assert not v.passed
     assert "route" in v.detail
+
+
+def test_grade_contains_any_one_match():
+    c = QaCase(
+        line_no=7,
+        question="q",
+        expected_contains=[],
+        expected_source=None,
+        expected_contains_any=["未包含", "无法", "没有"],
+    )
+    v = grade_case(c, {"ok": True, "answer": "上下文未包含相关信息。", "citations": []})
+    assert v.passed
