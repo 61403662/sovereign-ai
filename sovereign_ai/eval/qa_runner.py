@@ -25,28 +25,39 @@ def run_qa_file(
 
 
 def _run_paths(paths: list[Path], quiet: bool) -> int:
+    # Stable keyword checks: SQL uses template answers even when sql_nl_format: true
+    # or SOVEREIGN_SQL_NL_FORMAT=1 is set in the shell.
+    prev = os.environ.get("SOVEREIGN_SQL_NL_FORMAT")
+    os.environ["SOVEREIGN_SQL_NL_FORMAT"] = "0"
     total_passed = 0
     total_cases = 0
     exit_code = 0
-    for path in paths:
-        if not path.is_file():
-            print(f"missing file: {path}", file=sys.stderr)
-            return 2
-        verdicts = run_qa_file(path)
-        passed = sum(1 for v in verdicts if v.passed)
-        failed = len(verdicts) - passed
-        total_passed += passed
-        total_cases += len(verdicts)
-        if failed:
-            exit_code = 1
-        for v in verdicts:
-            status = "PASS" if v.passed else "FAIL"
-            if not quiet or not v.passed:
-                print(f"[{status}] L{v.case.line_no}: {v.case.question}")
-                if not v.passed:
-                    print(f"        {v.detail}")
-        print(f"\n{passed}/{len(verdicts)} passed, {failed} failed — {path.name}\n")
-    print(f"=== total {total_passed}/{total_cases} passed ===")
+    try:
+        for path in paths:
+            if not path.is_file():
+                print(f"missing file: {path}", file=sys.stderr)
+                exit_code = 2
+                break
+            verdicts = run_qa_file(path)
+            passed = sum(1 for v in verdicts if v.passed)
+            failed = len(verdicts) - passed
+            total_passed += passed
+            total_cases += len(verdicts)
+            if failed:
+                exit_code = 1
+            for v in verdicts:
+                status = "PASS" if v.passed else "FAIL"
+                if not quiet or not v.passed:
+                    print(f"[{status}] L{v.case.line_no}: {v.case.question}")
+                    if not v.passed:
+                        print(f"        {v.detail}")
+            print(f"\n{passed}/{len(verdicts)} passed, {failed} failed — {path.name}\n")
+        print(f"=== total {total_passed}/{total_cases} passed ===")
+    finally:
+        if prev is None:
+            os.environ.pop("SOVEREIGN_SQL_NL_FORMAT", None)
+        else:
+            os.environ["SOVEREIGN_SQL_NL_FORMAT"] = prev
     return exit_code
 
 
