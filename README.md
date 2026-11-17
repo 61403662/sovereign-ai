@@ -44,7 +44,7 @@ Production **ingest/ask** runs on **Deploy** with local Ollama; see [`docs/runbo
 
 **Regression:** after ingest on Deploy, `python -m sovereign_ai.eval` or `.\scripts\eval.ps1` (see `eval/qa.sample.jsonl`).
 
-**Phase 2 (BOM/SQL):** `.\scripts\bom-init.ps1`, then `python -m sovereign_ai.ask "做一台 XF-120 材料费多少钱？"` — auto `[route: sql]`; document questions stay `[route: rag]`.
+**Phase 2 (BOM/SQL):** `.\scripts\bom-init.cmd` or `bom-import.cmd`, then `ask.cmd` — auto `[route: sql]`. Optional NL phrasing: `config/rag.yaml` → `sql_nl_format: true`; compare: `.\scripts\sql-nl-compare.cmd "做一台 XF-120 材料费多少钱？"`.
 
 **SSH pull + local UI (05/06):** Git over SSH on Deploy; optional `pip install -e ".[serve]"` and `python -m sovereign_ai.serve` (127.0.0.1:8787).
 

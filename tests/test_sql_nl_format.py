@@ -1,4 +1,4 @@
-from sovereign_ai.bom.nl_format import SQL_NL_SYSTEM, maybe_naturalize_sql_answer
+from sovereign_ai.bom.nl_format import SQL_NL_SYSTEM, maybe_naturalize_sql_answer, sql_nl_format_enabled
 
 
 def test_nl_format_disabled_uses_template(monkeypatch, tmp_path):
@@ -27,3 +27,11 @@ def test_nl_format_disabled_uses_template(monkeypatch, tmp_path):
 def test_sql_nl_system_mentions_json_rules():
     assert "JSON" in SQL_NL_SYSTEM
     assert "禁止" in SQL_NL_SYSTEM
+
+
+def test_sql_nl_env_override(monkeypatch, tmp_path):
+    monkeypatch.setattr("sovereign_ai.bom.nl_format.load_rag_config", lambda r: {"sql_nl_format": False})
+    monkeypatch.setenv("SOVEREIGN_SQL_NL_FORMAT", "1")
+    assert sql_nl_format_enabled(tmp_path) is True
+    monkeypatch.setenv("SOVEREIGN_SQL_NL_FORMAT", "0")
+    assert sql_nl_format_enabled(tmp_path) is False

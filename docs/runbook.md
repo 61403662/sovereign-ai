@@ -192,7 +192,7 @@ Try SQL-side answers (no LLM; numbers from DB):
 
 **Unified `ask`:** `python -m sovereign_ai.ask` and `serve` now auto-route BOM/价格/供应商类问题到 SQLite，其余走 RAG. CLI prints `[route: sql]` or `[route: rag]`. Direct BOM debugging: `python -m sovereign_ai.bom "…"`.
 
-**SQL 自然语言：** `config/rag.yaml` → `sql_nl_format: true` 时，统一 `ask` 的 SQL 答案经 Ollama **润色**（数字仍以 DB 为准，失败回退模板）。默认 **false**，便于 eval 与 07 模板一致。
+**SQL 自然语言：** `config/rag.yaml` → `sql_nl_format: true` 时，统一 `ask` 的 SQL 答案经 Ollama **润色**（数字仍以 DB 为准，失败回退模板）。默认 **false**，便于 eval 与 07 模板一致。截图对比：`.\scripts\sql-nl-compare.cmd "做一台 XF-120 材料费多少钱？"`；临时：`$env:SOVEREIGN_SQL_NL_FORMAT="1"`。
 
 **Eval 双轨：** `.\scripts\eval-all.cmd` 或 `python -m sovereign_ai.eval --all` — `qa.sample.jsonl` + `fan_qa.example.jsonl`（含 `route: sql` 校验）。
 
