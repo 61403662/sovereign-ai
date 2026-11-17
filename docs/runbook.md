@@ -194,7 +194,7 @@ Try SQL-side answers (no LLM; numbers from DB):
 
 **SQL 自然语言：** `config/rag.yaml` → `sql_nl_format: true` 时，统一 `ask` 的 SQL 答案经 Ollama **润色**（数字仍以 DB 为准，失败回退模板）。默认 **false**，便于 eval 与 07 模板一致。截图对比：`.\scripts\sql-nl-compare.cmd "做一台 XF-120 材料费多少钱？"`；临时：`$env:SOVEREIGN_SQL_NL_FORMAT="1"`。
 
-**Eval 双轨：** `.\scripts\eval-all.cmd` 或 `python -m sovereign_ai.eval --all` — `qa.sample.jsonl` + `fan_qa.example.jsonl`（含 `route: sql` 校验）。
+**Eval 双轨：** `.\scripts\eval-all.cmd` 或 `python -m sovereign_ai.eval --all` — `qa.sample.jsonl` + `fan_qa.example.jsonl`（含 `route: sql` 校验）。跑 eval 时强制 **SQL 模板答**（无视 `sql_nl_format: true`），避免口语丢 `CNY`/料号导致误报。
 
 ### Regression (`eval/qa.sample.jsonl`)
 
