@@ -1,4 +1,9 @@
-from sovereign_ai.bom.nl_format import SQL_NL_SYSTEM, maybe_naturalize_sql_answer, sql_nl_format_enabled
+from sovereign_ai.bom.nl_format import (
+    SQL_NL_SYSTEM,
+    answers_too_similar,
+    maybe_naturalize_sql_answer,
+    sql_nl_format_enabled,
+)
 
 
 def test_nl_format_disabled_uses_template(monkeypatch, tmp_path):
@@ -27,6 +32,18 @@ def test_nl_format_disabled_uses_template(monkeypatch, tmp_path):
 def test_sql_nl_system_mentions_json_rules():
     assert "JSON" in SQL_NL_SYSTEM
     assert "禁止" in SQL_NL_SYSTEM
+
+
+def test_answers_too_similar_detects_bullet_clone():
+    tpl = "型号 XF-120：\n- 扇叶 @ 2.8\n- 电机 @ 18.5\n合计：26.7 CNY（虚构样例）。"
+    nl = "型号 XF-120：\n- 扇叶 @ 2.8\n- 电机 @ 18.5\n合计：26.7 CNY"
+    assert answers_too_similar(tpl, nl)
+
+
+def test_answers_not_similar_prose():
+    tpl = "型号 XF-120：\n- 扇叶 @ 2.8\n合计：26.7"
+    nl = "按当前最低价估算，XF-120 单机材料费合计 26.7 CNY，主要花在电机和扇叶上。"
+    assert not answers_too_similar(tpl, nl)
 
 
 def test_sql_nl_env_override(monkeypatch, tmp_path):

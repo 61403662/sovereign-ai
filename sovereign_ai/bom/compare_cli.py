@@ -30,6 +30,12 @@ def main(argv: list[str] | None = None) -> int:
     if result.get("same_template_fallback"):
         print()
         print("（注意：润色未生效或 Ollama 失败，已回退为模板。请检查 ollama list / chat 模型。）")
+    elif result.get("nl_looks_like_template"):
+        print()
+        print(
+            "（注意：Ollama 有响应，但仍是清单体，与模板几乎一样。"
+            "请 git pull 最新 prompt 后再试；或换更大 chat 模型。）"
+        )
     return 0
 
 

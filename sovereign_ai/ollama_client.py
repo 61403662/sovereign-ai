@@ -35,12 +35,20 @@ class OllamaClient:
                 last_err = e
         raise RuntimeError(f"All embed endpoints failed: {last_err}")
 
-    def chat(self, messages: list[dict[str, str]], stream: bool = False) -> str:
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        stream: bool = False,
+        *,
+        temperature: float | None = None,
+    ) -> str:
         payload: dict[str, Any] = {
             "model": self.chat_model,
             "messages": messages,
             "stream": stream,
         }
+        if temperature is not None:
+            payload["options"] = {"temperature": temperature}
         with httpx.Client(timeout=self.timeout) as client:
             r = client.post(f"{self.base_url}/api/chat", json=payload)
             try:
