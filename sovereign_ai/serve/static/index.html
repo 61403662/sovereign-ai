@@ -54,7 +54,10 @@
           status.textContent = data.error || "失败";
           return;
         }
-        status.textContent = data.route ? `路由: ${data.route}` : "";
+        const bits = [];
+        if (data.route) bits.push(`路由: ${data.route}`);
+        if (data.intent) bits.push(`intent: ${data.intent}`);
+        status.textContent = bits.join(" · ");
         answer.textContent = data.answer || "";
         cites.innerHTML = "";
         if (data.citations_text) {

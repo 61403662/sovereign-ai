@@ -44,7 +44,12 @@ Production **ingest/ask** runs on **Deploy** with local Ollama; see [`docs/runbo
 
 **Regression:** after ingest on Deploy, `python -m sovereign_ai.eval` or `.\scripts\eval.ps1` (see `eval/qa.sample.jsonl`).
 
-**Phase 2 (BOM/SQL):** `bom-init.cmd` / `bom-import.cmd` (sample CSV) or `bom-import-private.cmd` (`data/private/fan/csv/`, gitignored). `ask.cmd` → `[route: sql]`; `eval-all.cmd` → 7+3; optional `sql_nl_format` + `sql-nl-compare.cmd`. `/health` reports `bom_db` + `sql_nl_format`.
+**Phase 2 (BOM/SQL):** See [`docs/PHASE2-ROADMAP.md`](docs/PHASE2-ROADMAP.md). In short: unified `ask` routing, SQLite BOM, ingest via seed/CSV/private CSV, optional `sql_nl_format`, `eval-all` (7 RAG + 6 SQL fan cases).
+
+```powershell
+.\scripts\bom-import-private.cmd
+.\scripts\eval-all.cmd
+```
 
 **SSH pull + local UI (05/06):** Git over SSH on Deploy; optional `pip install -e ".[serve]"` and `python -m sovereign_ai.serve` (127.0.0.1:8787).
 

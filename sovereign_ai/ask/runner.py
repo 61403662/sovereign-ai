@@ -142,6 +142,7 @@ def ask_question(question: str) -> dict[str, Any]:
                 "intent": bom.get("intent"),
                 "error": None,
                 "answer": answer,
+                "data": bom.get("data"),
                 "citations": [],
                 "citations_text": "引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）",
             }

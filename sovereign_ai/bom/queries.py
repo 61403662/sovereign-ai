@@ -22,6 +22,16 @@ def extract_model_code(question: str) -> str | None:
     return m.group(0).upper() if m else None
 
 
+def list_fan_models(conn: sqlite3.Connection) -> list[dict[str, str]]:
+    rows = conn.execute(
+        "SELECT model_code, name, revision FROM fan_model ORDER BY model_code"
+    ).fetchall()
+    return [
+        {"model_code": r["model_code"], "name": r["name"], "revision": r["revision"]}
+        for r in rows
+    ]
+
+
 def list_bom(conn: sqlite3.Connection, model_code: str) -> list[BomRow]:
     rows = conn.execute(
         """

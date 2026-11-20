@@ -1,7 +1,7 @@
 import sqlite3
 
 from sovereign_ai.bom.db import init_database
-from sovereign_ai.bom.queries import estimate_material_cost, extract_model_code, list_bom
+from sovereign_ai.bom.queries import estimate_material_cost, extract_model_code, list_bom, list_fan_models
 from sovereign_ai.bom.router import BomIntent, classify_bom_question
 from sovereign_ai.bom.runner import answer_bom_question
 from sovereign_ai.paths import repo_root
@@ -32,6 +32,17 @@ def test_estimate_cost_matches_sql():
     assert result["ok"]
   # 2.8*1 + 18.5*1 + 1.2*1 + 0.05*4 + 4.0*1 = 26.7
     assert result["total"] == 26.7
+
+
+def test_list_fan_models():
+    root = repo_root()
+    init_database(root, reset=True)
+    conn = sqlite3.connect(root / "storage" / "sqlite" / "fan_bom.db")
+    conn.row_factory = sqlite3.Row
+    models = list_fan_models(conn)
+    conn.close()
+    codes = {m["model_code"] for m in models}
+    assert codes == {"XF-120", "XF-200"}
 
 
 def test_classify_and_answer():

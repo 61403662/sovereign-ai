@@ -8,6 +8,7 @@ from sovereign_ai.bom.queries import (
     estimate_material_cost,
     extract_model_code,
     list_bom,
+    list_fan_models,
 )
 from sovereign_ai.bom.router import BomIntent, classify_bom_question, extract_material_code
 from sovereign_ai.paths import repo_root as _repo_root
@@ -39,6 +40,22 @@ def answer_bom_question(question: str, root=None) -> dict[str, Any]:
                 f" {result['unit_price']} {result['currency']}/单位。"
             )
             return {"ok": True, "route": "sql", "intent": intent.value, "answer": ans, "data": result}
+
+        if intent == BomIntent.LIST_MODELS:
+            models = list_fan_models(conn)
+            if not models:
+                return {"ok": False, "route": "sql", "error": "fan_model 表为空", "answer": ""}
+            body = ["样例库当前型号："]
+            for m in models:
+                body.append(f"- {m['model_code']} {m['name']}（rev {m['revision']}）")
+            body.append("（数据来源：本机 SQLite）")
+            return {
+                "ok": True,
+                "route": "sql",
+                "intent": intent.value,
+                "answer": "\n".join(body),
+                "data": {"models": models},
+            }
 
         model = extract_model_code(question)
         if not model:

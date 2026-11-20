@@ -171,6 +171,8 @@ Expect an answer citing `data/raw/incoming-inspection-sample.md` and section hea
 
 ## Phase 2 — Fan BOM (SQLite)
 
+Full pillar list: [`docs/PHASE2-ROADMAP.md`](PHASE2-ROADMAP.md) (CSV is ingest only, not a third ask route).
+
 Fictional schema in `schema/fan_bom.sql`; sample seed in `data/samples/fan/seed.example.sql`. DB lives at `storage/sqlite/fan_bom.db` (gitignored).
 
 One-time (SQL seed **or** CSV — same fictional data):

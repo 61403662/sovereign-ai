@@ -118,7 +118,7 @@ $env:SOVEREIGN_SQL_NL_FORMAT="0"
 
 ## 七、下一篇预告（09）
 
-**真 CSV 进私有目录**（gitignore）、或 **多库/多表路由**——在润色与 eval 稳了之后再接。
+**私有 CSV** 灌进同一 `fan_bom.db`（`data\private\fan\csv\`，gitignore）——CSV **不是**第三路由，只是更新 SQL 库的方式。见 **主权 AI-09**。
 
 ---
 
