@@ -10,7 +10,7 @@ Phase 2 is **not** “CSV support”. CSV is one **ingest** path into the same S
 | **B. Unified routing** | done + evolving | `[route: rag\|sql]`; mixed 检验+材料费 → SQL when price intent wins |
 | **C. Data ingest** | done | `bom-init` (SQL seed), `bom-import` (sample CSV), `bom-import-private`, `SOVEREIGN_BOM_CSV_DIR` |
 | **D. Natural language (SQL)** | done | `sql_nl_format`, `sql-nl-compare`; eval forces template |
-| **E. Regression** | done | `eval-all` 7+3, `expected_route`, `expected_contains_any` |
+| **E. Regression** | done | `eval-all` 7+6 (13 total), `expected_route`, `expected_contains_any` |
 | **F. Local UI** | partial | `serve` shows `route`; SQL returns `intent` + `data` in JSON |
 | **G. Multi-model / queries** | in progress | list models, XF-200 in eval; more intents as needed |
 | **H. Enterprise connectors** | planned | read-only ODBC/API, no write-back; still single ask |
@@ -39,7 +39,7 @@ git pull
 
 | Article | Phase 2 focus |
 |---------|----------------|
-| 07 | Routing, two data sources, eval 7+3 |
+| 07 | Routing, two data sources, eval 7+6 |
 | 08 | `sql_nl_format` (presentation, not口径) |
 | 09 | Private CSV ingest (subset of pillar C) |
 | 10+ | Mixed routing, multi-model, UI/API, connectors |

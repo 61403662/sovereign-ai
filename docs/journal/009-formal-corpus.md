@@ -6,7 +6,7 @@
 
 ## 开篇
 
-01～06 把 **本机 RAG** 跑通；**07** 加了 **SQLite 样例 BOM**，统一 `ask` 自动 **`[route: rag]` / `[route: sql]`**；**08** 在 **数字仍来自 DB** 的前提下，用 **`sql_nl_format`** 把 SQL 答案说成人话，且 **`eval-all` 仍 10/10**。
+01～06 把 **本机 RAG** 跑通；**07** 加了 **SQLite 样例 BOM**，统一 `ask` 自动 **`[route: rag]` / `[route: sql]`**；**08** 在 **数字仍来自 DB** 的前提下，用 **`sql_nl_format`** 把 SQL 答案说成人话，且 **`eval-all` 仍全绿**（当下 **7 题 RAG + 6 题 fan SQL**，**total 13/13**）。
 
 读者跟到 08 时，心里通常还有一个问题：
 
@@ -19,7 +19,7 @@
 你在 Deploy 上若已跑通：
 
 ```text
-bom-import-private.cmd → eval-all 10/10 → ask [route:sql] 26.7
+bom-import-private.cmd → eval-all 13/13 → ask [route:sql] 26.7 / 型号列表
 ```
 
 本篇就是把这条链 **写进系列手记**，并说明 **改 CSV、重建库、再验收** 的固定节奏。
@@ -79,7 +79,7 @@ CSV 文件 ──导入──► fan_bom.db (SQLite) ──只读 SQL──► a
 | bom_line.csv | model_code, material_code, qty_per_unit |
 | supplier_offer.csv | material_code, supplier_code, unit_price, currency, valid_from, valid_to |
 
-样例数据在 **`data\samples\fan\csv\`**（进 Git）；**XF-120 材料费合计 26.7 CNY** 与 07 手测一致，便于 **eval fan 三题** 对照。
+样例数据在 **`data\samples\fan\csv\`**（进 Git）；**XF-120 材料费合计 26.7 CNY**、**XF-200** 等在库中均有虚构行，便于 **`fan_qa.example.jsonl` 六题**（BOM、材料费、最便宜供应商、型号列表、混合「检验+材料费」）对照。
 
 **从 Excel 导出时建议：**
 
@@ -128,27 +128,51 @@ git pull
 # 1. 建私有目录（仅第一次）
 New-Item -ItemType Directory -Force data\private\fan\csv
 
-# 2. 从样例复制（先保证 10/10，再改数做实验）
+# 2. 从样例复制（先保证 13/13，再改数做实验）
 Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 
 # 3. 导入（重建库；私有脚本内部带 --reset 语义见 runbook）
 .\scripts\bom-import-private.cmd
 
-# 4. 双轨回归
+# 4. 双轨回归（勿写 python -m sovereign_ai.eval.eval_all，无此模块）
 .\scripts\eval-all.cmd
 
-# 5. SQL 问答（08 若开了 sql_nl_format，会是口语；数字仍 26.7）
+# 5. SQL 问答（08 若开了 sql_nl_format，会是口语；数字仍来自 DB）
 .\scripts\ask.cmd "做一台 XF-120 材料费多少钱？"
+.\scripts\ask.cmd "样例库里有哪些风机型号？"
+.\scripts\ask.cmd "XF-120验收时材料费多少钱？"
+```
+
+**PowerShell 若禁止 `Activate.ps1`**：不必激活 venv；上面脚本已固定调用 `.\.venv\Scripts\python.exe`。等价命令：
+
+```powershell
+.\.venv\Scripts\python.exe -m sovereign_ai.eval --all
 ```
 
 预期：
 
-- **eval-all** → `7/7` + `3/3`，**total 10/10**  
-- **ask** → `[route: sql]`，含 **26.7**（或你改 CSV 后的新合计）  
+- **eval-all** → `7/7`（`qa.sample.jsonl`）+ `6/6`（`fan_qa.example.jsonl`），**total 13/13**  
+- **ask** → `[route: sql]`，材料费含 **26.7**（或你改 CSV 后的新合计）；型号问句含 **XF-120**、**XF-200**  
 - 引用行：**fan_bom.db**，不是 md
 
 **故意改一个数（建议发文前自己做一次）：**  
 用 Excel / 编辑器把 `supplier_offer.csv` 里某行 `unit_price` 微调 **0.1**，再跑 `bom-import-private.cmd` → 同一句 ask，合计应 **跟着变**；`python -m sovereign_ai.bom "…"` 模板段与合计一致——证明 **变的是库，不是模型瞎编**。
+
+**Deploy 实测摘录（脱敏后可作图4/图7b 旁注）**
+
+```text
+=== total 13/13 passed ===
+
+[route: sql]
+XF-120验收时材料费是26.7元，包含了ABS扇叶、电源线1m、…
+引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）
+
+[route: sql]
+样例库里有 XF-120 和 XF-200 两种风机型号，分别是小型桌面风扇 120mm 和 200mm。
+引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）
+```
+
+（上例在 **`sql_nl_format: true`** 时出现口语；**eval** 仍按模板关键字判 **13/13**。）
 
 ---
 
@@ -165,7 +189,7 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 | 对比模板 vs 润色 | `sql-nl-compare.cmd` |
 | 文档 + SQL 一起回归 | `eval-all.cmd` |
 
-**08 提醒**：`sql_nl_format: true` 时 **日常 ask 可读**；**eval-all 内部仍强制 SQL 模板判分**，所以你可以 **长期开润色** 且保持 **10/10**（需 `git pull` 到含 eval 修复的版本）。
+**08 提醒**：`sql_nl_format: true` 时 **日常 ask 可读**；**eval-all 内部仍强制 SQL 模板判分**，所以你可以 **长期开润色** 且保持 **13/13**。
 
 ---
 
@@ -177,9 +201,9 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 
 1. **git pull** — 代码更新  
 2. **语料变了？** → `ingest.cmd --reset`（只影响 RAG 七题）  
-3. **BOM/报价 CSV 变了？** → **`bom-import-private.cmd`**（只影响 fan 三题 + SQL ask）  
+3. **BOM/报价 CSV 变了？** → **`bom-import-private.cmd`**（只影响 fan 六题 + SQL ask）  
 4. **Ollama / models.yaml** — embed + chat 在跑  
-5. **`eval-all.cmd`** — 必须 **10/10** 再截图写文  
+5. **`eval-all.cmd`** — 必须 **13/13** 再截图写文  
 6. **演示 Web** — `serve.cmd` 重启；`GET /health` 可看 **`bom_db: true`**、**`sql_nl_format`** 当前开关  
 
 **不必每天全跑**：只改 md → 不必 import BOM；只改 CSV → 不必 ingest；**改了 `ask` 路由或 BOM 查询代码** → 两组 eval 都跑。
@@ -192,7 +216,8 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 |------|--------|
 | import 报 missing columns | 列名与样例 CSV 第一行不一致 |
 | import 成功 ask 仍是旧数 | 未再 import；或问的不是改价涉及的型号 |
-| `[route: rag]` 却要价 | 句子里有 **检验/工艺/计划** 等 override；或库未 `database_ready` |
+| `[route: rag]` 却要价 | 少见：带 **材料费/多少钱** 等应走 SQL；若库未 `database_ready` 会回落 RAG |
+| 型号列表答不出 XF 代号 | 问法须落 **LIST_MODELS**（如「有哪些风机型号」）；`git pull` 后重跑 eval |
 | fan eval FAIL | 合计/料号与 `fan_qa.example.jsonl` 不一致（改 CSV 后要改 jsonl 或恢复样例数） |
 | 口语答缺 CNY 但 eval 过 | 正常：eval 强制模板；日常问看 **数字** 即可 |
 | 私有目录有文件仍找不到 | 路径须为 `data\private\fan\csv\` 五文件名齐全 |
@@ -212,8 +237,9 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 
 - [ ] `data\private\fan\csv\` 有五张 CSV，**未** `git add`  
 - [ ] `bom-import-private.cmd` 成功  
-- [ ] `eval-all` **10/10**  
+- [ ] `eval-all` **13/13**  
 - [ ] `ask` 材料费 **`[route: sql]`**，合计与 CSV 一致  
+- [ ] （可选）`样例库里有哪些风机型号？` 含 **XF-120**、**XF-200**  
 - [ ] （可选）改价后 re-import，合计跟着变  
 - [ ] （可选）`/health` 中 `bom_db: true`  
 - [ ] 截图已脱敏  
@@ -231,7 +257,7 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 | 项 | 建议 |
 |----|------|
 | **标题** | 主权 AI-09：私有 CSV 灌进 BOM 库——和文档一样不进 Git |
-| **摘要** | CSV 只更新本机 SQLite，不是第三路由；private 目录 gitignore，导入后 eval 仍 10/10。 |
+| **摘要** | CSV 只更新本机 SQLite，不是第三路由；private 目录 gitignore，导入后 eval 仍 13/13。 |
 | **外链** | https://github.com/61403662/sovereign-ai （`data/samples/fan/csv/README.md`，`docs/runbook.md` Phase 2） |
 
 ## 配图 shot list
@@ -242,7 +268,8 @@ Copy-Item data\samples\fan\csv\*.csv data\private\fan\csv\
 | 图1 | 「两类数据源 + CSV 仅为进货」示意 |
 | 图2 | 五表五文件名列名表 |
 | 图3 | data\raw vs data\private vs storage 对照 |
-| 图4 | bom-import-private + 10/10 eval |
+| 图4 | bom-import-private + `=== total 13/13 passed ===` |
 | 图5 | 命令对照小表 |
 | 图6 | 维护节奏 1～6 |
 | 图7 | 改 CSV 前后 ask 合计变化（实拍） |
+| 图8 | ask 口语：型号列表 + 「验收时材料费」各一屏（08 联动） |
