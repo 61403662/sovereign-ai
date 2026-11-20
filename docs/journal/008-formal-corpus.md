@@ -1,4 +1,4 @@
-# 主权 AI-08：SQL 算账也要「说人话」——sql_nl_format 与对比验收
+# 主权 AI-08：使用人话来引用SQL数据
 
 发表前脱敏：内网 IP、主机名打码；截图保留 `[route: sql]` 与 **26.7** 等数字即可（虚构样例）。
 
@@ -16,12 +16,12 @@
 
 【图1 下正文】
 
-| 步骤 | 谁做 | 不许做什么 |
-|------|------|------------|
-| 1 | SQLite 只读查询 | 不让 chat 模型「估算」材料费 |
-| 2 | 生成 **verified_template** 模板答 | 不把编造料号当真 |
-| 3 | （可选）Ollama 按 JSON **改写法** | 禁止改金额/数量/供应商代号 |
-| 4 | eval **fan 三题** | `expected_contains` 仍盯 **26.7**、**SUP-ALPHA** |
+| 步骤 | 核心技术 | 不许做什么 |
+|------|----------|------------|
+| 1 算数 | SQLite 只读 + `fan_bom.db` / BOM SQL | chat **不许估算**材料费 |
+| 2 模板 | `verified_template` 清单答（`sovereign_ai.bom`） | **不许编造**料号 |
+| 3 润色 | `sql_nl_format` + Ollama（仅 `query_facts` JSON） | **不许改** 26.7、CNY、供应商代号 |
+| 4 回归 | `eval-all`（跑题时强制 SQL 模板判分） | **不许因口语**丢 `expected_contains` 关键字 |
 
 一句话：**sql_nl_format 是「版式」，不是「口径」。**
 
@@ -126,7 +126,7 @@ $env:SOVEREIGN_SQL_NL_FORMAT="0"
 
 | 项 | 建议 |
 |----|------|
-| **标题** | 主权 AI-08：SQL 也要说人话——sql_nl_format 与对比截图 |
+| **标题** | 主权 AI-08：使用人话来引用SQL数据 |
 | **摘要** | DB 先算数，Ollama 只润色 SQL 答；一键对比模板与自然中文，eval 仍 10/10。 |
 | **外链** | https://github.com/61403662/sovereign-ai |
 

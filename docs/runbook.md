@@ -180,7 +180,7 @@ One-time (SQL seed **or** CSV — same fictional data):
 # alternate: .\scripts\bom-import.cmd
 ```
 
-CSV samples live in `data/samples/fan/csv/`; private exports can mirror those filenames locally (stay gitignored under `data/` if real).
+CSV samples live in `data/samples/fan/csv/`. Real exports: same five filenames under `data/private/fan/csv/` (gitignored) → `.\scripts\bom-import-private.cmd --reset` (or pass path to `python -m sovereign_ai.bom --import-csv`).
 
 Try SQL-side answers (no LLM; numbers from DB):
 

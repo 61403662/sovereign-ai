@@ -6,9 +6,21 @@
 
 | 项 | 建议 |
 |----|------|
-| 标题 | 主权 AI-08：SQL 也要说人话——sql_nl_format 与对比截图 |
+| 标题 | 主权 AI-08：使用人话来引用SQL数据 |
 | 摘要 | DB 先算数，Ollama 只润色；一键对比模板与自然中文，eval 仍 10/10。 |
 | 封面 | `assets/sovereign-ai-08-cover-v1.jpg`（同 03–07 系列版式） |
+
+## 配图
+
+| 图 | 文件 | 可实拍替换 |
+|----|------|------------|
+| 封面 | sovereign-ai-08-cover-v1.jpg | 左清单右口语 |
+| 图1 | sovereign-ai-08-fig1.jpg | §一四步原则 |
+| 图2 | sovereign-ai-08-fig2.jpg | sql-nl-compare |
+| 图3 | sovereign-ai-08-fig3.jpg | yaml false/true ask |
+| 图4 | sovereign-ai-08-fig4.jpg | eval 10/10 |
+
+路径：`/home/ghjv84/.cursor/projects/home-ghjv84-falcon/assets/sovereign-ai-08-*`
 
 ## 实拍优先
 

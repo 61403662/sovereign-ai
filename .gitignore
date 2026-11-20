@@ -1,5 +1,6 @@
 # Private data and local indexes
 data/raw/
+data/private/
 data/processed/
 storage/
 chroma/
