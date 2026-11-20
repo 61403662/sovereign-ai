@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from sovereign_ai.bom.db import init_database
-from sovereign_ai.bom.import_csv import default_csv_dir, import_csv_directory
+from sovereign_ai.bom.import_csv import import_csv_directory, resolve_csv_dir
 from sovereign_ai.bom.runner import answer_bom_question
 from sovereign_ai.paths import repo_root
 
@@ -18,13 +18,13 @@ def main(argv: list[str] | None = None) -> int:
         nargs="?",
         const="",
         metavar="DIR",
-        help="Load schema + CSVs (default: data/samples/fan/csv)",
+        help="Load schema + CSVs (default: SOVEREIGN_BOM_CSV_DIR or data/samples/fan/csv)",
     )
     parser.add_argument("--reset", action="store_true", help="With --init / --import-csv, delete existing DB first")
     args = parser.parse_args(argv)
 
     if args.import_csv is not None:
-        csv_dir = default_csv_dir(repo_root()) if args.import_csv == "" else args.import_csv
+        csv_dir = resolve_csv_dir() if args.import_csv == "" else args.import_csv
         path = import_csv_directory(csv_dir, reset=args.reset)
         print(f"Imported CSV → {path}")
         return 0

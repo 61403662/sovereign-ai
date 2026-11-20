@@ -50,4 +50,11 @@ def api_ask(body: AskRequest) -> dict:
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True}
+    from sovereign_ai.bom.db import database_ready
+    from sovereign_ai.bom.nl_format import sql_nl_format_enabled
+
+    return {
+        "ok": True,
+        "bom_db": database_ready(),
+        "sql_nl_format": sql_nl_format_enabled(),
+    }

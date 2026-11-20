@@ -180,7 +180,7 @@ One-time (SQL seed **or** CSV — same fictional data):
 # alternate: .\scripts\bom-import.cmd
 ```
 
-CSV samples live in `data/samples/fan/csv/`. Real exports: same five filenames under `data/private/fan/csv/` (gitignored) → `.\scripts\bom-import-private.cmd --reset` (or pass path to `python -m sovereign_ai.bom --import-csv`).
+CSV samples live in `data/samples/fan/csv/`. Real exports: same five filenames under `data/private/fan/csv/` (gitignored) → `.\scripts\bom-import-private.cmd` (add `--reset` via ps1 args if needed). Override dir: `$env:SOVEREIGN_BOM_CSV_DIR="D:\path\to\csv"`. Import validates CSV headers before insert.
 
 Try SQL-side answers (no LLM; numbers from DB):
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -43,8 +44,38 @@ _NUMERIC_COLUMNS = {
     "supplier_offer": {"unit_price"},
 }
 
+_REQUIRED_HEADERS: dict[str, set[str]] = {
+    "fan_model": {"model_code", "name", "revision"},
+    "material": {"material_code", "name", "unit"},
+    "supplier": {"supplier_code", "name", "contact"},
+    "bom_line": {"model_code", "material_code", "qty_per_unit"},
+    "supplier_offer": {
+        "material_code",
+        "supplier_code",
+        "unit_price",
+        "currency",
+        "valid_from",
+        "valid_to",
+    },
+}
+
+_ENV_BOM_CSV_DIR = "SOVEREIGN_BOM_CSV_DIR"
+
+
+def validate_csv_headers(csv_file: Path, table: str) -> None:
+    required = _REQUIRED_HEADERS.get(table)
+    if not required:
+        return
+    with csv_file.open(encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        got = {h for h in (reader.fieldnames or []) if h}
+    missing = required - got
+    if missing:
+        raise ValueError(f"{csv_file.name}: missing columns {sorted(missing)!r} (need {sorted(required)!r})")
+
 
 def load_csv_table(conn: sqlite3.Connection, table: str, csv_file: Path) -> int:
+    validate_csv_headers(csv_file, table)
     with csv_file.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         rows: list[dict[str, Any]] = []
@@ -61,6 +92,27 @@ def load_csv_table(conn: sqlite3.Connection, table: str, csv_file: Path) -> int:
 def default_csv_dir(root: Path | None = None) -> Path:
     root = root or repo_root()
     return root / "data" / "samples" / "fan" / "csv"
+
+
+def private_csv_dir(root: Path | None = None) -> Path:
+    root = root or repo_root()
+    return root / "data" / "private" / "fan" / "csv"
+
+
+def private_csv_ready(root: Path | None = None) -> bool:
+    d = private_csv_dir(root)
+    return d.is_dir() and (d / "fan_model.csv").is_file()
+
+
+def resolve_csv_dir(root: Path | None = None, *, prefer_private: bool = False) -> Path:
+    """Sample CSV dir unless env/private override."""
+    root = root or repo_root()
+    env = os.environ.get(_ENV_BOM_CSV_DIR)
+    if env:
+        return Path(env).expanduser()
+    if prefer_private and private_csv_ready(root):
+        return private_csv_dir(root)
+    return default_csv_dir(root)
 
 
 def import_csv_directory(
