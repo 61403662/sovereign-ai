@@ -11,6 +11,7 @@ def test_route_sql_vs_rag():
     assert route_label("每批尺寸抽检至少几件？", root) == "rag"
     assert route_label("XF-120 装配工艺螺栓扭矩多少？", root) == "rag"
     assert route_label("XF-120检验时材料费多少钱？", root) == "sql"
+    assert route_label("样例库里有哪些风机型号？", root) == "sql"
 
 
 def test_bom_without_db_not_sql():

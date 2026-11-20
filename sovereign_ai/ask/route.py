@@ -20,6 +20,8 @@ _SQL_STRONG = (
     "物料清单",
     "型号列表",
     "哪些型号",
+    "风机型号",
+    "样例库",
 )
 
 # Document / process questions — prefer RAG when no strong SQL/BOM ask.

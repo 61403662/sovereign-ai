@@ -23,7 +23,9 @@ def classify_bom_question(question: str) -> BomIntent:
         k in q for k in ("便宜", "最低价", "哪家", "供应商")
     ):
         return BomIntent.CHEAPEST_SUPPLIER
-    if any(k in q for k in ("有哪些型号", "哪些型号", "型号列表", "都有哪些型号")):
+    if re.search(r"哪些.{0,8}型号|型号列表|都有哪些型号", q):
+        return BomIntent.LIST_MODELS
+    if "型号" in q and any(k in q for k in ("风机型号", "样例库")):
         return BomIntent.LIST_MODELS
     if any(k in q for k in ("多少钱", "材料费", "材料费用", "成本", "总价", "估算", "价格")):
         return BomIntent.ESTIMATE_COST

@@ -45,6 +45,10 @@ def test_list_fan_models():
     assert codes == {"XF-120", "XF-200"}
 
 
+def test_classify_list_models_phrasing():
+    assert classify_bom_question("样例库里有哪些风机型号？") == BomIntent.LIST_MODELS
+
+
 def test_classify_and_answer():
     root = repo_root()
     init_database(root, reset=True)
