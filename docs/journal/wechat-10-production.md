@@ -8,7 +8,7 @@
 |----|------|
 | 标题 | 主权 AI-10：混合句怎么路由——检验里出现「材料费」仍走 SQL |
 | 摘要 | 价/BOM 强词优先于检验词；eval fan 第 6 题锁 route；尚未同答拼 RAG+SQL。 |
-| 封面 | `assets/sovereign-ai-10-cover-v1.jpg`（待生成，同 03–09 系列） |
+| 封面 | `assets/sovereign-ai-10-cover-v1.jpg`（已生成，同 03–09 系列） |
 
 ## 核心信息（防读者误解）
 
@@ -33,18 +33,21 @@ git pull
 .\scripts\ask.cmd "每批尺寸抽检至少几件？"
 ```
 
-## 配图（待生成）
+## 配图（已生成稿，可换 Deploy 实拍）
 
 | 图 | 文件 | 可实拍替换 |
 |----|------|------------|
 | 封面 | sovereign-ai-10-cover-v1.jpg | 混合句分叉 |
 | 图1 | sovereign-ai-10-fig1.jpg | §一 07→10 |
-| 图2 | sovereign-ai-10-fig2.jpg | 路由四步 |
-| 图3 | sovereign-ai-10-fig3.jpg | **建议换** eval L6 |
-| 图4 | sovereign-ai-10-fig4.jpg | **建议换** 三问终端 |
+| 图2 | sovereign-ai-10-fig2.jpg | 路由步骤 |
+| 图3 | sovereign-ai-10-fig3.jpg | **建议换** eval 13/13 + L6 |
+| 图4 | sovereign-ai-10-fig4.jpg | **建议换** 三问终端实拍 |
 | 图5 | sovereign-ai-10-fig5.jpg | 复合答未做 |
 
-路径：`sovereign-ai/assets/sovereign-ai-10-*.jpg`
+路径（双份）：
+
+- 仓库：`sovereign-ai/assets/sovereign-ai-10-*.jpg`
+- Cursor：`/home/ghjv84/.cursor/projects/home-ghjv84-falcon/assets/sovereign-ai-10-*.jpg`
 
 ## 发表前勾选
 
