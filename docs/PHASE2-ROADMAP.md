@@ -7,7 +7,7 @@ Phase 2 is **not** “CSV support”. CSV is one **ingest** path into the same S
 | Pillar | Status | Notes |
 |--------|--------|-------|
 | **A. Schema & SQL core** | done | `schema/fan_bom.sql`, read-only queries, XF-120/200 |
-| **B. Unified routing** | done + evolving | `[route: rag\|sql]`; mixed 检验+材料费 → SQL when price intent wins |
+| **B. Unified routing** | done + evolving | `[route: rag\|sql]`; mixed 检验+材料费 → SQL when price intent wins (**WeChat 10**) |
 | **C. Data ingest** | done | `bom-init` (SQL seed), `bom-import` (sample CSV), `bom-import-private`, `SOVEREIGN_BOM_CSV_DIR` |
 | **D. Natural language (SQL)** | done | `sql_nl_format`, `sql-nl-compare`; eval forces template |
 | **E. Regression** | done | `eval-all` 7+6 (13 total), `expected_route`, `expected_contains_any` |
@@ -42,4 +42,5 @@ git pull
 | 07 | Routing, two data sources, eval 7+6 |
 | 08 | `sql_nl_format` (presentation, not口径) |
 | 09 | Private CSV ingest (subset of pillar C) |
-| 10+ | Mixed routing, multi-model, UI/API, connectors |
+| 10 | Mixed **routing** (检验+材料费), fan eval L6, not compound answer |
+| 11+ | Compound RAG+SQL answer (pillar I), UI `intent`/`data` (F), connectors (H) |
