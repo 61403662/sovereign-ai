@@ -1,4 +1,6 @@
-# 主权 AI-11：浏览器里还能看见「查库意图」——route、intent 与 data
+# 主权 AI-11：浏览器里的 SQL 问答
+
+> 副题：同一 127.0.0.1 小页；走 SQL 时见 **route / intent / data**，走文档仍 **RAG**。
 
 > Phase 2 全貌见 **`docs/PHASE2-ROADMAP.md`**。本篇对应 **支柱 F（本地 UI/API）**：在 **06 的 127.0.0.1 小页** 上接 Phase 2；**不是** 复合答（支柱 I，留给 12+）。
 
@@ -147,8 +149,8 @@ curl -s http://127.0.0.1:8787/health
 
 | 项 | 建议 |
 |----|------|
-| **标题** | 主权 AI-11：浏览器里还能看见「查库意图」 |
-| **摘要** | 06 小页接上 Phase 2：同一 ask，SQL 返 route/intent/data；127.0.0.1 仍本机。 |
+| **标题** | 主权 AI-11：浏览器里的 SQL 问答 |
+| **摘要** | 06 小页接 Phase 2；浏览器问价钱见 intent/data；本机 127.0.0.1；eval 13/13。 |
 | **外链** | https://github.com/61403662/sovereign-ai （`sovereign_ai/serve/app.py`，`docs/runbook.md` serve） |
 
 ## 配图 shot list

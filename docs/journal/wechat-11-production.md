@@ -6,8 +6,8 @@
 
 | 项 | 建议 |
 |----|------|
-| 标题 | 主权 AI-11：浏览器里还能看见「查库意图」 |
-| 摘要 | 06 小页接 Phase 2；SQL 问返 route/intent/data；仍只监听 127.0.0.1。 |
+| 标题 | 主权 AI-11：浏览器里的 SQL 问答 |
+| 摘要 | 06 小页接 Phase 2；SQL 题见 intent/data；127.0.0.1；eval 13/13。 |
 | 封面 | `assets/sovereign-ai-11-cover-v1.jpg`（已生成） |
 
 ## 核心信息
