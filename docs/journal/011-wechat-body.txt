@@ -1,0 +1,140 @@
+标题：主权 AI-11：浏览器里还能看见「查库意图」
+
+摘要：06 的小页接上 Phase 2；走 SQL 时除了答案，还有 route、intent、data；仍只在本机 127.0.0.1。
+
+---
+
+发表前脱敏：截图可保留 127.0.0.1:8787、「路由 / intent」字样；勿露完整厂内路径或真实报价。
+
+开篇
+
+从 AI-07 起，要钱和 BOM 走 SQLite，问规格走文档，终端会提示 [route: sql] 或 [route: rag]。08 没动规矩，只是把 SQL 答案通过大语言模型加以自然语言润色；09 只是将本机 CSV 灌注到 BOM 库；10 处理混合句别走错路。从头到尾，都是一句问题、一个入口。
+
+AI-06 让你在 Deploy 上打开 http://127.0.0.1:8787，用浏览器翻文档、看引用——那时主要还是 Phase 1。现在还是这个地址、还是 POST /api/ask，但如果你问的是材料费、BOM、型号列表，除了中文答案，页面上方还会出现「路由: sql · intent: estimate_cost」这类字样；接口 JSON 里还有 data，装着合计、行明细、型号表，给程序和联调用，数字来自 SQLite，不是模型估算。
+
+AI-11 教你：怎么开 serve、各问一句文档和 SQL、怎么核对 intent，以及 eval-all 仍要 13/13。
+
+---
+
+一、为什么还要回到浏览器？
+
+【图1】
+
+命令行 ask.cmd 跟做很方便，但演示给别人看、或自己要对接别的脚本时，常常需要：
+
+· 一眼分清：系统在「估材料费」还是「列 BOM」；
+
+· 直接拿 JSON 里的 total，而不是从口语答案里抠 26.7；
+
+· 改完路由或 BOM 代码，用同一入口试文档题和价钱题。
+
+仍然只监听 127.0.0.1，没有登录，和 06 一样。变化是：走 SQL 时接口多带了 intent 和 data，小页把「路由 · intent」亮在状态行。
+
+---
+
+二、走 SQL 时，比纯文档多问多什么？
+
+【图2】
+
+命令行、浏览器、eval-all 共用一套 ask_question()。
+
+走文档（RAG）时，常见是：route 为 rag，有 answer，下面有 md 引用。
+
+走库（SQL）时，除了 answer，还有：
+
+· route：sql
+
+· intent：题型。常见四种——estimate_cost（估材料费）、list_bom（列单机用料）、list_models（列型号）、cheapest_supplier（某物料哪家便宜）
+
+· data：SQLite 查出来的结构，例如 total、逐行材料费、models 列表
+
+· citations_text：SQL 侧通常一行说明，指向 fan_bom.db
+
+若开了 sql_nl_format（08），变的是 answer 怎么说，data 里的数不变。
+
+---
+
+三、页面上能看到什么？data 在哪里？
+
+【图3：建议用 Deploy 实拍 RAG 一屏】
+
+提问成功后：
+
+· 状态行：文档题类似「路由: rag」；价钱题类似「路由: sql · intent: estimate_cost」
+
+· 正文：给人看的答案（可与 CLI 一致）
+
+· 引用区：RAG 是 data/raw 下的 md；SQL 是「样例 BOM，非模型臆测」类说明
+
+data 默认不在页面上整屏刷 JSON。需要看结构时：浏览器 F12 → Network → 选中 /api/ask → Response。
+
+---
+
+四、跟做（你 Deploy 上已能复现）
+
+【图4：建议用实拍——左 rag「至少 5 件」，右 sql 明细 + 26.7】
+
+cd E:\sovereign-ai-repo
+git pull
+.\scripts\serve.cmd
+
+浏览器打开 http://127.0.0.1:8787（PowerShell 窗口别关）。
+
+问 1：每批尺寸抽检至少几件？
+→ 路由: rag，答案含至少 5 件，引用 incoming-inspection-sample.md
+
+问 2：做一台 XF-120 材料费多少钱？（你也可问「材料费是多少」）
+→ 路由: sql · intent: estimate_cost，答案含 26.7 及行明细，引用 fan_bom.db
+
+健康检查（PowerShell 建议）：
+Invoke-RestMethod http://127.0.0.1:8787/health
+→ bom_db 应为 True，并可看 sql_nl_format 开关
+
+关掉 serve 后：
+.\scripts\eval-all.cmd
+→ 仍应 === total 13/13 passed ===
+小页不改变回归判分，eval 仍是验收准绳。
+
+【图5：可选实拍 13/13 终端】
+
+---
+
+五、和 AI-10「复合答」别混
+
+【图5 示意】
+
+11 仍是一句一问、只走一条路。不会在同一次回答里又贴 SOP 段落、又报材料费合计——那是 12 以后要写的复合答。
+
+11 解决的是：走 SQL 时，除了人话，还能看见系统认成哪种题型（intent），以及算出来的结构（data）。
+
+---
+
+六、排障（心里有数）
+
+· 页面打不开 → serve.cmd 是否在跑；地址必须是 127.0.0.1:8787
+
+· 要价却显示 rag → 见 AI-10 混合句与灌库；fan_bom.db 是否就绪
+
+· 状态行没有 intent → 多半没走 sql，看 Network 里完整 JSON
+
+· health 里 bom_db 为 false → bom-init 或 bom-import-private
+
+· 口语和数字对不上 → 以 data / 模板段为准，润色只改 answer
+
+---
+
+七、下一篇（12）
+
+在 intent/data 能看清之后，再写复合答（一句既要规章又要价钱），或只读连外部库，会更顺。
+
+---
+
+文末
+
+跟做仓库：https://github.com/61403662/sovereign-ai
+
+本机接口：POST http://127.0.0.1:8787/api/ask
+
+健康检查：GET /health
+
+起步命令：.\scripts\serve.cmd

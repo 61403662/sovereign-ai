@@ -43,4 +43,5 @@ git pull
 | 08 | `sql_nl_format` (presentation, not口径) |
 | 09 | Private CSV ingest (subset of pillar C) |
 | 10 | Mixed **routing** (检验+材料费), fan eval L6, not compound answer |
-| 11+ | Compound RAG+SQL answer (pillar I), UI `intent`/`data` (F), connectors (H) |
+| 11 | Local UI/API: `serve`, `intent` + `data` on SQL (pillar F) |
+| 12+ | Compound RAG+SQL (pillar I), connectors (H) |
