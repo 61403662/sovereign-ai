@@ -10,6 +10,12 @@
 | 摘要 | 「同时」+ 规章词 + 询价词 → compound 两段答；13/13 不变。 |
 | 封面 | `assets/sovereign-ai-12-cover-v1.jpg`（已生成） |
 
+## 文末预告（13，可原样贴公众号）
+
+12 的复合要靠「同时、并且、还要」才触发——POC 阶段先求稳。
+
+下一篇 **AI-13**：**没有连接词时，怎么知道用户既要规章又要价钱**（双意图、澄清一问，或本地模型只拆句不算价）。原则不变：数走库，规矩走文档。
+
 ## 配图
 
 | 图 | 文件 | 建议 |
@@ -25,7 +31,7 @@
 
 1. ask compound 两句标题 + 26.7  
 2. eval-all 13/13  
-3. compound jsonl 1/1  
+3. compound-eval 1/1  
 4. serve 路由 compound (rag + sql)  
 
 ## 最短跟做
@@ -34,5 +40,5 @@
 git pull
 .\scripts\eval-all.cmd
 .\scripts\ask.cmd "扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？"
-.\.venv\Scripts\python.exe -m sovereign_ai.eval eval\compound_qa.example.jsonl
+.\scripts\compound-eval.cmd
 ```
