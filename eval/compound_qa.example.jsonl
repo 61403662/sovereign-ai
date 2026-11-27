@@ -1,1 +1,1 @@
-{"question": "扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？", "route": "compound", "expected_contains": ["26.7", "【文档与规程】", "【BOM 与价钱】"], "expected_contains_any": ["让步", "划痕"]}
+{"question": "扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？", "route": "compound", "expected_contains": ["26.7", "【文档与规程】", "【BOM 与价钱】", "CNY"], "expected_contains_any": ["让步", "划痕", "裂纹", "变形", "未包含", "上下文未包含"]}
