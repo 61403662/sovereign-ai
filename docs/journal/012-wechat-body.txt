@@ -1,18 +1,20 @@
 标题：主权 AI-12：复合答——一句里既要文档又要价钱
 
-摘要：带「同时」等词且既问规章又问价钱时，RAG+SQL 各答一段；eval-all 仍 13/13，另跑 compound jsonl。
+摘要：带「同时」等词且既问规章又问价钱时，RAG+SQL 各答一段；eval-all 仍 13/13，复合另跑 compound jsonl。
 
 ---
 
+发表前脱敏：截图保留 [route: compound]、26.7、引用文件名即可。
+
 开篇
 
-从 AI-07 到 AI-11，一直是「一句问题、一条路」：要么查文档，要么查 BOM 库。10 处理的是混合句别走错路（检验+材料费仍以 SQL 为主）；11 是在浏览器里看见 intent 和 data。
+从 AI-07 到 AI-11，一直是「一句问题、一条路」：要么查文档，要么查 BOM 库。10 处理混合句别走错路（检验+材料费仍以 SQL 为主）；11 是在浏览器里看见 intent 和 data。
 
-还有一种真需求：扇叶划痕能否让步？同时 XF-120 材料费多少钱？——这时你既要 SOP 里的说法，又要 26.7 这种数，单路不够。
+还有一种真需求：扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？——既要规程里的说法，又要 26.7 这种数，单路不够。
 
-AI-12 做的是复合答：问句里明确带有「同时、并且、还要」等，并且既像问规章又像问价钱，系统会走 compound——文档和 SQL 各跑一遍，答案分成【文档与规程】和【BOM 与价钱】两段。
+AI-12 做的是复合答：问句里带有「同时、并且、还要」等，并且既像问规章又像问价钱，系统走 [route: compound]——按「同时」拆成前后两句，前半走 RAG，后半走 SQL，答案分成【文档与规程】和【BOM 与价钱】两段。
 
-说明：这是 POC。靠连接词触发，不是万能拆句。日常回归仍是 eval-all 13/13；复合另有一个小 jsonl 单跑。
+说明：这是 POC，靠连接词触发，不是万能拆句。日常回归仍是 eval-all 13/13；复合题用 eval/compound_qa.example.jsonl 单独跑（.\scripts\compound-eval.cmd）。
 
 ---
 
@@ -20,11 +22,11 @@ AI-12 做的是复合答：问句里明确带有「同时、并且、还要」�
 
 【图1】
 
-· XF-120检验时材料费多少钱？ → 还是只走 sql，只答价钱（10 已定）。
+· XF-120检验时材料费多少钱？ → 只走 sql，只答价钱（10 已约定：价赢、一条路）。
 
-· 扇叶能否让步？同时材料费多少钱？ → compound，两段都要。
+· 扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？ → compound，两段都要。
 
-没有「同时」这类词 → 不会自动复合，行为和以前一样。
+没有「同时 / 并且 / 还要」这类词 → 不会自动复合，和以前一样。
 
 ---
 
@@ -32,53 +34,78 @@ AI-12 做的是复合答：问句里明确带有「同时、并且、还要」�
 
 【图2】
 
-三件事同时满足：BOM 库有数据；句里有「同时 / 并且 / 还要 / 顺便 / 另外」；句里既有检验、让步、工艺这类文档词，又有材料费、多少钱、BOM 这类询价词。
+三件事同时满足：
+
+· fan_bom.db 已建好（与 09 灌库相同）；
+
+· 句里有「同时 / 并且 / 还要 / 顺便 / 另外」之一；
+
+· 句里既有检验、让步、工艺等文档词，又有材料费、多少钱、BOM 等询价词。
 
 ---
 
-三、答案和浏览器长什么样？
+三、答案长什么样？
 
-【图3】
+【图3 建议用 Deploy 实拍 compound 输出】
 
-命令行第一行是 [route: compound]，正文两段标题分开。
+终端第一行：[route: compound]
 
-浏览器状态类似：路由: compound (rag + sql)。开发者工具里能看到 routes 数组和 SQL 的 data。
+【文档与规程】……（可引用 data/raw 下 md；样例若没有划痕让步条款，模型可据实说「未包含」，不编造）
+
+【BOM 与价钱】……（走 SQL 模板：行明细 + 合计 26.7 CNY，引用 fan_bom.db）
+
+复合答里 BOM 段用模板数字，不对整句做 sql_nl_format 润色，避免把「让步」写进价钱段。
+
+浏览器（若开 serve）：状态类似 路由: compound (rag + sql)。
 
 ---
 
-四、跟做
+四、跟做（Deploy 已验收写法）
 
-【图4 实拍】
+【图4：eval-all 13/13 + compound-eval 1/1 实拍更佳】
 
+cd E:\sovereign-ai-repo
 git pull
 .\scripts\eval-all.cmd
 .\scripts\ask.cmd "扇叶划痕能否让步接收？同时做一台 XF-120 材料费多少钱？"
-.\.venv\Scripts\python.exe -m sovereign_ai.eval eval\compound_qa.example.jsonl
+.\scripts\compound-eval.cmd
 
-eval-all 仍应是 13/13。复合文件目前 1 题，应 PASS。
+预期：
 
-也可 serve 用同一句话点一次。
+· eval-all === total 13/13 passed ===（复合不改变原有 13 题）
+
+· ask 为 compound，两段标题，BOM 含 26.7
+
+· compound-eval 1/1 PASS
+
+例句请用「让步接收」，与 eval 一致。
 
 ---
 
-五、边界
+五、边界（心里有数）
+
+【图5】
 
 · 没说「同时」就不会复合。
 
-· 文档没 ingest 好，规程段可能空或弱；价钱段仍来自 SQLite。
+· 规程段取决于 data\raw 语料；没有划痕条款时，答「裂纹/变形」或「未包含」都属正常。
 
-· 不是聊天机器人式的多轮追问。
+· 价钱段只信 SQLite 模板与 data，不信模型估算。
+
+· 不支持多轮追问；不是企业级意图拆分。
 
 ---
 
 六、下一篇（13）
 
-只读连厂内正式库，或把复合题并进总回归——看你产线节奏。
+只读连厂内正式库，或是否把复合题并进 eval-all——看你产线节奏。
 
 ---
 
 文末
 
-仓库：https://github.com/61403662/sovereign-ai
-复合检测：sovereign_ai/ask/compound.py
-回归：eval/compound_qa.example.jsonl
+跟做：https://github.com/61403662/sovereign-ai
+
+复合逻辑：sovereign_ai/ask/compound.py
+
+回归：.\scripts\compound-eval.cmd
