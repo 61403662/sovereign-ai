@@ -115,19 +115,20 @@ def ask_rag(question: str) -> dict[str, Any]:
 
 
 def _ask_compound(question: str) -> dict[str, Any]:
+    from sovereign_ai.ask.compound import split_compound_parts
     from sovereign_ai.bom.runner import answer_bom_question
 
-    rag = ask_rag(question)
-    bom = answer_bom_question(question)
+    doc_q, sql_q = split_compound_parts(question)
+    rag = ask_rag(doc_q)
+    bom = answer_bom_question(sql_q)
     if not rag.get("ok"):
         return rag
     if not bom.get("ok"):
         rag["route"] = "rag"
         return rag
 
-    from sovereign_ai.bom.nl_format import maybe_naturalize_sql_answer
-
-    sql_text = maybe_naturalize_sql_answer(question, bom)
+    # Compound: keep SQL on verified template (no NL on the full dual-intent sentence).
+    sql_text = str(bom.get("answer") or "")
     answer = (
         "【文档与规程】\n"
         f"{rag.get('answer') or ''}\n\n"

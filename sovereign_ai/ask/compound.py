@@ -10,6 +10,16 @@ from sovereign_ai.paths import repo_root
 _COMPOUND_MARKERS = ("同时", "并且", "还要", "顺便", "另外")
 
 
+def split_compound_parts(question: str) -> tuple[str, str]:
+    """Split on first 同时/并且/… into (doc-ish, price-ish) clauses."""
+    q = (question or "").strip()
+    for m in _COMPOUND_MARKERS:
+        if m in q:
+            left, right = q.split(m, 1)
+            return left.strip(), right.strip()
+    return q, q
+
+
 def should_compound(question: str, root=None) -> bool:
     q = (question or "").strip()
     if not q or not database_ready(root or repo_root()):
