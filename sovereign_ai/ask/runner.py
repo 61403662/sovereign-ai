@@ -114,6 +114,43 @@ def ask_rag(question: str) -> dict[str, Any]:
     }
 
 
+def _ask_compound(question: str) -> dict[str, Any]:
+    from sovereign_ai.bom.runner import answer_bom_question
+
+    rag = ask_rag(question)
+    bom = answer_bom_question(question)
+    if not rag.get("ok"):
+        return rag
+    if not bom.get("ok"):
+        rag["route"] = "rag"
+        return rag
+
+    from sovereign_ai.bom.nl_format import maybe_naturalize_sql_answer
+
+    sql_text = maybe_naturalize_sql_answer(question, bom)
+    answer = (
+        "【文档与规程】\n"
+        f"{rag.get('answer') or ''}\n\n"
+        "【BOM 与价钱】\n"
+        f"{sql_text}"
+    )
+    cites = rag.get("citations_text") or format_citations(rag.get("citations") or [])
+    bom_line = "引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）"
+    citations_text = f"{cites}\n{bom_line}".strip() if cites else bom_line
+
+    return {
+        "ok": True,
+        "route": "compound",
+        "routes": ["rag", "sql"],
+        "intent": bom.get("intent"),
+        "error": None,
+        "answer": answer,
+        "data": bom.get("data"),
+        "citations": rag.get("citations") or [],
+        "citations_text": citations_text,
+    }
+
+
 def ask_question(question: str) -> dict[str, Any]:
     """Unified ask: BOM/SQL when matched, else RAG."""
     question = (question or "").strip()
@@ -126,9 +163,13 @@ def ask_question(question: str) -> dict[str, Any]:
             "citations": [],
         }
 
+    from sovereign_ai.ask.compound import should_compound
     from sovereign_ai.ask.route import should_use_bom
     from sovereign_ai.bom.router import BomIntent, classify_bom_question
     from sovereign_ai.bom.runner import answer_bom_question
+
+    if should_compound(question):
+        return _ask_compound(question)
 
     if should_use_bom(question):
         bom = answer_bom_question(question)

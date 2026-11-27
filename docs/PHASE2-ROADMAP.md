@@ -14,7 +14,7 @@ Phase 2 is **not** “CSV support”. CSV is one **ingest** path into the same S
 | **F. Local UI** | partial | `serve` shows `route`; SQL returns `intent` + `data` in JSON |
 | **G. Multi-model / queries** | in progress | list models, XF-200 in eval; more intents as needed |
 | **H. Enterprise connectors** | planned | read-only ODBC/API, no write-back; still single ask |
-| **I. Hybrid / compound answers** | planned | e.g. “依据 SOP 能否让步 + BOM 价差” (RAG + SQL in one turn) |
+| **I. Hybrid / compound answers** | POC | `route: compound` when 同时+doc+price keywords (**WeChat 12**) |
 
 ## What we explicitly do *not* do in Phase 2 (yet)
 
@@ -44,4 +44,5 @@ git pull
 | 09 | Private CSV ingest (subset of pillar C) |
 | 10 | Mixed **routing** (检验+材料费), fan eval L6, not compound answer |
 | 11 | Local UI/API: `serve`, `intent` + `data` on SQL (pillar F) |
-| 12+ | Compound RAG+SQL (pillar I), connectors (H) |
+| 12 | Compound answer (pillar I, POC) |
+| 13+ | Connectors (H), eval-all scope for compound |
