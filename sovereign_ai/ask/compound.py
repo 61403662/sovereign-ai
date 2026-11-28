@@ -17,6 +17,14 @@ def split_compound_parts(question: str) -> tuple[str, str]:
         if m in q:
             left, right = q.split(m, 1)
             return left.strip(), right.strip()
+    for sep in ("？", "?", "；", ";"):
+        if sep in q:
+            left, _, right = q.partition(sep)
+            left, right = left.strip(), right.strip()
+            if left and right:
+                if not left.endswith(("？", "?")):
+                    left = left + "？"
+                return left, right
     return q, q
 
 

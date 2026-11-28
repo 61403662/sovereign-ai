@@ -39,7 +39,7 @@
 ## 三、交互形态（计划）
 
 - **CLI**：打印选项；第二次 `ask --choice B` 或交互读入  
-- **serve**：JSON `clarify: true` + `options`；前端三按钮；第二次 POST 带 `choice` + 原问  
+- **serve**：JSON `clarify: true` + `options`；前端三按钮；第二次 POST 带 `clarify_choice` + 原问  
 - **状态**：浏览器会话内保存原问即可；**无**长对话记忆  
 
 ---

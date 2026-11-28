@@ -9,10 +9,19 @@
 
 ## 前置（发文前必须有）
 
-- [ ] `needs_clarification` 或等价 API 落地  
-- [ ] serve 三选项 UI 或 CLI 二次输入 demo  
-- [ ] 澄清触发 + 第二轮 route 的 eval/jsonl  
-- [ ] eval-all 13/13、compound-eval 1/1 仍绿  
+- [x] API：`POST /api/ask` 首轮回 `clarify` + `options`，第二轮带 `clarify_choice`  
+- [x] CLI：`--choice rag|sql|compound`；serve 三按钮  
+- [x] `eval/clarify_trigger.example.jsonl` + `scripts/clarify-eval.cmd`  
+- [ ] Deploy：**eval-all 13/13**、**compound-eval 1/1**、**clarify-eval 1/1**
+
+```powershell
+git pull
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？"
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？" --choice compound
+.\scripts\clarify-eval.cmd
+.\scripts\eval-all.cmd
+.\scripts\compound-eval.cmd
+```
 
 ## 系列衔接
 

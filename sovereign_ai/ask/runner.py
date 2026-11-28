@@ -152,7 +152,53 @@ def _ask_compound(question: str) -> dict[str, Any]:
     }
 
 
-def ask_question(question: str) -> dict[str, Any]:
+def _ask_with_clarify_choice(question: str, choice: str) -> dict[str, Any]:
+    choice = choice.strip().lower()
+    if choice == "rag":
+        rag = ask_rag(question)
+        rag["route"] = "rag"
+        return rag
+    if choice == "compound":
+        return _ask_compound(question)
+    if choice == "sql":
+        from sovereign_ai.bom.runner import answer_bom_question
+        from sovereign_ai.bom.nl_format import maybe_naturalize_sql_answer
+
+        bom = answer_bom_question(question)
+        if not bom.get("ok"):
+            return {
+                "ok": False,
+                "route": "sql",
+                "error": bom.get("error") or "BOM 查询失败",
+                "answer": "",
+                "citations": [],
+                "citations_text": "",
+            }
+        answer = maybe_naturalize_sql_answer(question, bom)
+        return {
+            "ok": True,
+            "route": "sql",
+            "intent": bom.get("intent"),
+            "error": None,
+            "answer": answer,
+            "data": bom.get("data"),
+            "citations": [],
+            "citations_text": "引用来源: storage/sqlite/fan_bom.db（样例 BOM，非模型臆测）",
+        }
+    return {
+        "ok": False,
+        "route": "clarify",
+        "error": f"无效 --choice: {choice!r}，应为 rag | sql | compound",
+        "answer": "",
+        "citations": [],
+    }
+
+
+def ask_question(
+    question: str,
+    *,
+    clarify_choice: str | None = None,
+) -> dict[str, Any]:
     """Unified ask: BOM/SQL when matched, else RAG."""
     question = (question or "").strip()
     if not question:
@@ -164,10 +210,17 @@ def ask_question(question: str) -> dict[str, Any]:
             "citations": [],
         }
 
+    if clarify_choice and str(clarify_choice).strip():
+        return _ask_with_clarify_choice(question, str(clarify_choice).strip())
+
+    from sovereign_ai.ask.clarify import build_clarify_response, should_clarify
     from sovereign_ai.ask.compound import should_compound
     from sovereign_ai.ask.route import should_use_bom
     from sovereign_ai.bom.router import BomIntent, classify_bom_question
     from sovereign_ai.bom.runner import answer_bom_question
+
+    if should_clarify(question):
+        return build_clarify_response(question)
 
     if should_compound(question):
         return _ask_compound(question)
@@ -215,13 +268,20 @@ def ask_question(question: str) -> dict[str, Any]:
     return rag
 
 
-def run_ask(question: str) -> int:
-    result = ask_question(question)
+def run_ask(question: str, *, clarify_choice: str | None = None) -> int:
+    result = ask_question(question, clarify_choice=clarify_choice)
     if not result["ok"]:
         print(result["error"], file=sys.stderr)
         return 1
     route = result.get("route") or "rag"
     print(f"[route: {route}]")
+    if result.get("clarify"):
+        print(result.get("prompt") or "")
+        for opt in result.get("options") or []:
+            print(f"  {opt.get('id')}: {opt.get('label')}")
+        if result.get("hint"):
+            print(result["hint"])
+        return 0
     print(result["answer"])
     footer = result.get("citations_text") or format_citations(result.get("citations") or [])
     if footer:
@@ -232,7 +292,13 @@ def run_ask(question: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Ask a question using local RAG")
     parser.add_argument("question", nargs="?", help="Question text")
+    parser.add_argument(
+        "--choice",
+        metavar="rag|sql|compound",
+        default=None,
+        help="AI-13: after clarify route, pick rag, sql, or compound",
+    )
     args = parser.parse_args(argv)
     if not args.question:
         parser.error("question is required")
-    return run_ask(args.question)
+    return run_ask(args.question, clarify_choice=args.choice)

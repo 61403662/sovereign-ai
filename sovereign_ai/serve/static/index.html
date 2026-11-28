@@ -20,34 +20,59 @@
   <textarea id="q" placeholder="输入问题…"></textarea>
   <button type="button" id="go">提问</button>
   <p id="status" aria-live="polite"></p>
+  <div id="clarify" hidden></div>
   <div id="answer"></div>
   <ul id="cites"></ul>
   <script>
     const q = document.getElementById("q");
     const go = document.getElementById("go");
     const status = document.getElementById("status");
+    const clarifyBox = document.getElementById("clarify");
     const answer = document.getElementById("answer");
     const cites = document.getElementById("cites");
-    go.addEventListener("click", async () => {
-      const question = q.value.trim();
+
+    async function postAsk(question, clarifyChoice) {
+      const body = { question };
+      if (clarifyChoice) body.clarify_choice = clarifyChoice;
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const text = await res.text();
+      return { res, data: JSON.parse(text) };
+    }
+
+    function showClarify(data) {
+      clarifyBox.hidden = false;
+      clarifyBox.innerHTML = "";
+      const p = document.createElement("p");
+      p.textContent = data.prompt || "请先选择要哪一种回答：";
+      clarifyBox.appendChild(p);
+      (data.options || []).forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = opt.label || opt.id;
+        btn.style.marginRight = "0.5rem";
+        btn.addEventListener("click", () => runAsk(q.value.trim(), opt.id));
+        clarifyBox.appendChild(btn);
+      });
+    }
+
+    async function runAsk(question, clarifyChoice) {
       if (!question) return;
       go.disabled = true;
+      clarifyBox.hidden = true;
+      clarifyBox.innerHTML = "";
       status.textContent = "检索与生成中…";
       answer.textContent = "";
       cites.innerHTML = "";
       try {
-        const res = await fetch("/api/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question }),
-        });
-        const text = await res.text();
         let data;
         try {
-          data = JSON.parse(text);
+          ({ data } = await postAsk(question, clarifyChoice));
         } catch (_) {
-          status.textContent =
-            `HTTP ${res.status}：${text.slice(0, 240) || "无 JSON（看 serve 窗口 Traceback）"}`;
+          status.textContent = "响应不是合法 JSON（看 serve Traceback）";
           return;
         }
         if (!data.ok) {
@@ -59,6 +84,11 @@
         if (data.routes && data.routes.length) bits.push(`(${data.routes.join(" + ")})`);
         if (data.intent) bits.push(`intent: ${data.intent}`);
         status.textContent = bits.join(" · ");
+        if (data.clarify) {
+          showClarify(data);
+          answer.textContent = "";
+          return;
+        }
         answer.textContent = data.answer || "";
         cites.innerHTML = "";
         if (data.citations_text) {
@@ -77,7 +107,9 @@
       } finally {
         go.disabled = false;
       }
-    });
+    }
+
+    go.addEventListener("click", () => runAsk(q.value.trim(), null));
   </script>
 </body>
 </html>

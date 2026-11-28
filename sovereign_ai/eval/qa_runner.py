@@ -29,6 +29,8 @@ def _run_paths(paths: list[Path], quiet: bool) -> int:
     # or SOVEREIGN_SQL_NL_FORMAT=1 is set in the shell.
     prev = os.environ.get("SOVEREIGN_SQL_NL_FORMAT")
     os.environ["SOVEREIGN_SQL_NL_FORMAT"] = "0"
+    prev_clarify = os.environ.get("SOVEREIGN_CLARIFY")
+    os.environ["SOVEREIGN_CLARIFY"] = "0"
     total_passed = 0
     total_cases = 0
     exit_code = 0
@@ -58,6 +60,10 @@ def _run_paths(paths: list[Path], quiet: bool) -> int:
             os.environ.pop("SOVEREIGN_SQL_NL_FORMAT", None)
         else:
             os.environ["SOVEREIGN_SQL_NL_FORMAT"] = prev
+        if prev_clarify is None:
+            os.environ.pop("SOVEREIGN_CLARIFY", None)
+        else:
+            os.environ["SOVEREIGN_CLARIFY"] = prev_clarify
     return exit_code
 
 
