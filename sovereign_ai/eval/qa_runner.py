@@ -24,13 +24,19 @@ def run_qa_file(
     return [grade_case(c, ask_fn(c.question)) for c in cases]
 
 
+def _disable_clarify_for_eval(paths: list[Path]) -> bool:
+    """Regression qa/fan sets keep clarify off; clarify_trigger.jsonl tests clarify on."""
+    return not any("clarify_trigger" in p.name for p in paths)
+
+
 def _run_paths(paths: list[Path], quiet: bool) -> int:
     # Stable keyword checks: SQL uses template answers even when sql_nl_format: true
     # or SOVEREIGN_SQL_NL_FORMAT=1 is set in the shell.
     prev = os.environ.get("SOVEREIGN_SQL_NL_FORMAT")
     os.environ["SOVEREIGN_SQL_NL_FORMAT"] = "0"
     prev_clarify = os.environ.get("SOVEREIGN_CLARIFY")
-    os.environ["SOVEREIGN_CLARIFY"] = "0"
+    if _disable_clarify_for_eval(paths):
+        os.environ["SOVEREIGN_CLARIFY"] = "0"
     total_passed = 0
     total_cases = 0
     exit_code = 0

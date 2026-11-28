@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from sovereign_ai.eval.grading import QaCase, grade_case
+from sovereign_ai.eval.qa_runner import _disable_clarify_for_eval
 
 
 def _case(**kwargs) -> QaCase:
@@ -11,6 +14,11 @@ def _case(**kwargs) -> QaCase:
     }
     defaults.update(kwargs)
     return QaCase(**defaults)
+
+
+def test_disable_clarify_for_regression_not_clarify_eval():
+    assert _disable_clarify_for_eval([Path("eval/fan_qa.example.jsonl")])
+    assert not _disable_clarify_for_eval([Path("eval/clarify_trigger.example.jsonl")])
 
 
 def test_grade_passes_contains_and_source():
