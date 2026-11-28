@@ -1,11 +1,141 @@
 标题：主权 AI-13：先澄清，再回答
 
-摘要：（代码落地后补：双意图含糊时先选文档/价钱/都要，再 second ask。）
+摘要：一句里又像问规章又像问价钱、又没写「同时」时，先 [route: clarify] 三选一，再第二轮 ask；eval-all 仍 13/13，另跑 clarify-eval。
 
 ---
 
-（母稿待实现后扩写；当前见 013-formal-corpus.md）
+发表前脱敏：截图可保留 clarify 选项、compound 两段、26.7、127.0.0.1；勿露厂内主机名与真实报价。
 
-开篇要点：
+开篇
 
-从 AI-12 起，用户明说「同时」可以 compound。但很多人不会这么说。AI-13 不硬猜：先让用户选这一次要「只要文档、只要价钱、还是两个都要」，再第二轮走原来的 RAG、SQL 或 compound。原则不变：数走库，规矩走文档。
+从 AI-07 到 AI-12，一路越走越远，路由也越分越细：纯文档走 rag，纯价钱走 sql，检验+材料费价赢走 sql（10），带「同时」走 compound（12）。
+
+还有一种同事常问的句式——没有「同时」，又不像只要一样：
+
+扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？
+
+前半像规程，后半像 BOM。系统自动猜 rag、sql 或 compound，猜错就要挨骂。
+
+AI-13 的做法是：先澄清，再回答。第一句命中「双意图含糊」时，返回 [route: clarify]，列出三条路；你选「只要文档 / 只要价钱 / 两个都要」之后，用同一句原话再 ask 一次（CLI 带 --choice，浏览器点按钮），再走 07～12 已有管线。澄清轮不算价、不编规章，只是问路。
+
+说明：POC 靠关键词规则，不是通用意图识别。eval-all 13/13 不变（跑 eval 时会关掉澄清以免误判）；澄清单独 eval/clarify_trigger.example.jsonl（.\scripts\clarify-eval.cmd）。
+
+---
+
+一、澄清是在问什么？
+
+【图1：建议用 Deploy 实拍 clarify 终端三选项】
+
+不是追问技术细节，而是问这一次你要哪种结果：
+
+· 只要文档/规程（RAG）→ 第二轮 route: rag
+
+· 只要价钱/BOM（SQL）→ 第二轮 route: sql（可带 intent / data）
+
+· 两个都要（复合答）→ 第二轮 route: compound，拆句逻辑同 12（按？等分成前后两半）
+
+澄清轮示例输出（节选）：
+
+[route: clarify]
+……系统不能替你猜现在要哪一种……
+rag: 只要文档/规程（RAG）
+sql: 只要价钱/BOM（SQL）
+compound: 两个都要（复合答）
+
+---
+
+二、和 10、12 怎么分工？
+
+【图2 对照表示意即可】
+
+不必澄清（保持原行为）：
+
+· 纯 RAG、纯 SQL 句；
+
+· AI-10：检验+材料费 → 仍只走 sql（价赢，不问用户）；
+
+· AI-12：句里有「同时 / 并且 / 还要…」且双意图齐全 → 直接 compound，不问用户。
+
+宜澄清：
+
+· 文档词（让步、检验、工艺…）与询价词（材料费、多少钱、BOM…）都在一句里；
+
+· 没有 12 的连接词，也不满足 10 的价赢特例。
+
+实现：`sovereign_ai/ask/clarify.py`；`ask_question()` 在 compound 判断之前先看是否澄清。
+
+---
+
+三、第二轮怎么跟？
+
+【图3：CLI compound 两段 + 26.7 实拍；可选浏览器三按钮】
+
+命令行（第二轮举 compound）：
+
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？"
+→ [route: clarify]
+
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？" --choice compound
+→ [route: compound]
+【文档与规程】……
+【BOM 与价钱】……合计 26.7 CNY……
+
+浏览器（serve 已开）：首问若 clarify，页面出现三个按钮；点「两个都要」即带 clarify_choice 再 POST，状态行类似 路由: compound (rag + sql)。
+
+关掉澄清（调试）：环境变量 SOVEREIGN_CLARIFY=0。
+
+---
+
+四、跟做（Deploy 已验收写法）
+
+【图4：clarify-eval 1/1 + eval-all 13/13 + compound-eval 1/1 终端实拍】
+
+cd E:\sovereign-ai-repo
+git pull
+
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？"
+.\scripts\ask.cmd "扇叶划痕能否让步接收？做一台 XF-120 材料费多少钱？" --choice compound
+
+.\scripts\clarify-eval.cmd
+.\scripts\eval-all.cmd
+.\scripts\compound-eval.cmd
+
+预期：
+
+· 首问 clarify；--choice compound 为两段答 + BOM 26.7
+
+· clarify-eval === total 1/1 passed ===
+
+· eval-all 13/13、compound-eval 1/1 仍绿
+
+可选：.\scripts\serve.cmd，同句在浏览器先澄清再点 compound。
+
+---
+
+五、边界（心里有数）
+
+【图5】
+
+· 样例 md 若没有「划痕/让步」条款，规程段可答「上下文未包含」——价钱段仍以 SQLite 为准，这是诚实边界，不是 bug。
+
+· 澄清不替代 12：要写「同时」仍直接 compound。
+
+· 无长对话记忆：浏览器只在当前会话记住原问；第二轮必须同一问句 + 选项。
+
+· 不做云端替你选路；127.0.0.1 本机 ask / serve 不变。
+
+---
+
+六、下一篇预告（14）
+
+无连接词自动 compound、只读连外部库（支柱 H）——在澄清 POC 稳了再议；14+ 见 PHASE2 路线图。
+
+---
+
+文末
+
+跟做：https://github.com/61403662/sovereign-ai
+
+澄清逻辑：sovereign_ai/ask/clarify.py
+
+回归：.\scripts\clarify-eval.cmd（澄清） + .\scripts\eval-all.cmd（13 题）
