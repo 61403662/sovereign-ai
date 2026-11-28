@@ -45,5 +45,5 @@ git pull
 | 10 | Mixed **routing** (检验+材料费), fan eval L6, not compound answer |
 | 11 | Local UI/API: `serve`, `intent` + `data` on SQL (pillar F) |
 | 12 | Compound answer (pillar I, POC) |
-| 13 | No-connector compound: dual-intent, clarify-turn, or LLM split-only (WeChat 13) |
+| 13 | Clarify-then-answer when dual-intent ambiguous (WeChat 13) |
 | 14+ | Connectors (H), eval-all scope for compound |
